@@ -1,0 +1,21 @@
+                            Defense of Design
+
+    The bed of the program's logic is in in crackSingle. A character array named
+keySpace is traversed as to find all combinations of possible passwords. Each
+for loop walks through 62 characters, so the nested set of for loop walks
+through the entire search space (62^4). Each combination is then passed to crypt
+with salt, which is the first to characters of the user name. The encrypted
+output is then captured in order to compare it to the encrypted password that
+was originally passed to the function.
+    In crackMultiple, the file is first parsed using parseFile in order to
+separate the file into user names and their associated encrypted passwords. The
+arrays of user names and encrypted passwords are simultaneously traversed and
+passed to crackSingle.
+    In crackSpeedy, the parameters are passed to crackMultiple.
+    CrackStealthy is yet to be implemented.
+
+
+                        Test Fails
+test failed: Extreme
+Investigation:
+

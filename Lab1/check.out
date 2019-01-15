@@ -1,0 +1,28 @@
+CrackSingle...
+Cracked: 1E32
+Elapsed: 61s
+CrackSingle: PASS
+CrackSpeedy...
+Cracked: 1E32
+Cracked: bo19
+Cracked: mA5s
+Cracked: 9ei3
+Cracked: 31de
+Cracked: s36B
+Cracked: 6 of 6
+Elapsed: 408s
+CrackSpeedy: PASS
+CrackMultiple...
+Cracked: 1E32
+Cracked: bo19
+Cracked: mA5s
+Cracked: 9ei3
+Cracked: 31de
+Cracked: s36B
+Cracked: 6 of 6
+Elapsed: 363s
+CrackMultiple: PASS
+CrackStealthy...
+Elapsed: 1s
+Max CPU: 102.0%
+CrackStealthy: FAIL
