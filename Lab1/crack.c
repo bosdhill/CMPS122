@@ -45,7 +45,7 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
         for (int j = 0; j < KEYSPACELEN && !found; j++) {
             for (int k = 0; k < KEYSPACELEN && !found; k++) {
                 if (pwlen == 4) {
-                    for (int w = 0; w < KEYSPACELEN && !found; w++) {
+                    for (int w = 0; w < KEYSPACELEN; w++) {
                         char randomPasswd[5] = {keySpace[i], keySpace[j],
                                                 keySpace[k], keySpace[w], '\0'};
                         cryptRandomPasswd = crypt(randomPasswd, salt);
