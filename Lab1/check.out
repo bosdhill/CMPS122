@@ -1,6 +1,6 @@
 CrackSingle...
 Cracked: 1E32
-Elapsed: 61s
+Elapsed: 73s
 CrackSingle: PASS
 CrackSpeedy...
 Cracked: 1E32
@@ -10,7 +10,7 @@ Cracked: 9ei3
 Cracked: 31de
 Cracked: s36B
 Cracked: 6 of 6
-Elapsed: 408s
+Elapsed: 223s
 CrackSpeedy: PASS
 CrackMultiple...
 Cracked: 1E32
@@ -20,9 +20,12 @@ Cracked: 9ei3
 Cracked: 31de
 Cracked: s36B
 Cracked: 6 of 6
-Elapsed: 363s
+Elapsed: 207s
 CrackMultiple: PASS
 CrackStealthy...
+maxCpu = 15
+Printing GeeksQuiz from Thread 
+After Thread
 Elapsed: 1s
-Max CPU: 102.0%
+Max CPU: 0.0%
 CrackStealthy: FAIL

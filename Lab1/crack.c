@@ -12,10 +12,12 @@
 #define KEYSPACELEN 62
 #define MAXLEN 1024
 
-
-void parseFile(char *fname, char users[][MAXLEN], char passwds[][MAXLEN], int *size) {
+/*
+ * Parse file in path FNAME into USERS and PASSWDS, returning the COUNT of both.
+ */
+void parseFile(char *fname, char users[][MAXLEN], char passwds[][MAXLEN], int *count) {
     FILE *passwdStream = fopen(fname, "r");
-    int count = 0;
+    *count = 0;
     char *line = NULL;
     size_t length = MAXLEN;
     const char delim[2] = ":";
@@ -23,12 +25,11 @@ void parseFile(char *fname, char users[][MAXLEN], char passwds[][MAXLEN], int *s
     if (passwdStream  == NULL) perror("fopen");
     while(getline(&line, &length, passwdStream) != -1) {
         token = strtok(line, delim);
-        strcpy(users[count], token);
+        strcpy(users[*count], token);
         token = strtok(NULL, delim);
-        strcpy(passwds[count], token);
-        count++;
+        strcpy(passwds[*count], token);
+        *count += 1;
     }
-    *size = count;
     fclose(passwdStream);
 }
 
