@@ -39,17 +39,19 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
     char keySpace[KEYSPACELEN] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     char salt[] = {username[0], username[1]};
     char *cryptRandomPasswd;
+    int found = 0;
 
-    for (int i = 0; i < KEYSPACELEN; i++) {
-        for (int j = 0; j < KEYSPACELEN; j++) {
-            for (int k = 0; k < KEYSPACELEN; k++) {
+    for (int i = 0; i < KEYSPACELEN && !found; i++) {
+        for (int j = 0; j < KEYSPACELEN && !found; j++) {
+            for (int k = 0; k < KEYSPACELEN && !found; k++) {
                 if (pwlen == 4) {
-                    for (int w = 0; w < KEYSPACELEN; w++) {
+                    for (int w = 0; w < KEYSPACELEN && !found; w++) {
                         char randomPasswd[5] = {keySpace[i], keySpace[j],
                                                 keySpace[k], keySpace[w], '\0'};
                         cryptRandomPasswd = crypt(randomPasswd, salt);
                         if (strcmp(cryptRandomPasswd, cryptPasswd) == 0) {
                             strcpy(passwd, randomPasswd);
+                            found = 1;
                             break;
                         }
                     }
@@ -60,6 +62,7 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
                     cryptRandomPasswd = crypt(randomPasswd, salt);
                     if (strcmp(cryptRandomPasswd, cryptPasswd) == 0) {
                         strcpy(passwd, randomPasswd);
+                        found = 1;
                         break;
                     }
                 }
