@@ -35,7 +35,8 @@ void crackStealthy(char *, char *, int, char *, int);
 /*
  * Parse file in path FNAME into USERS and PASSWDS, returning the COUNT of both.
  */
-void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1], int *count) {
+void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1],
+    int *count) {
     FILE *passwdStream = fopen(fname, "r");
     *count = 0;
     char *line = NULL;
@@ -85,12 +86,6 @@ void crackMultiple(char *fname, int pwlen, char **passwds) {
  */
 void crackSpeedy(char *fname, int pwlen, char **passwds) {
     crackMultiple(fname, pwlen, passwds);
-}
-
-void printArgs(pthread_t num, long unsigned int lower, long unsigned int upper, char salt[2],
-    char *cryptPasswd, char *passwd) {
-        printf("\t\tth: %lu\n\t\tlower=%lu\n\t\tupper=%lu\n\t\tsalt=%c%c\n\t\thash=%s\n\n",
-            num, lower, upper, salt[0], salt[1], cryptPasswd);
 }
 
 void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
