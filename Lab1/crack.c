@@ -25,9 +25,7 @@
 struct args_t {
     int lower;
     int upper;
-    char salt[2];
     char *cryptPasswd;
-    char *passwd;
 };
 
 char keySet[KEYSPACESIZE] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -38,11 +36,11 @@ char crackedPassword[5];
  * Compare all combinations of crypt hashs of ketSet from index LOWER to UPPER
  * and save result in crackedPassword.
  */
-void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
-    char *passwd) {
+void crackSingleReentrant(int lower, int upper, char *cryptPasswd) {
     char *cryptRandomPasswd;
     struct crypt_data data;
     int i, j, k, w;
+    char salt[2] = {cryptPasswd[0], cryptPasswd[1]};
     data.initialized = 0;
 
     for (i = lower; i < upper && !cracked; i++) {
@@ -68,8 +66,7 @@ void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
  */
 void *crackMultiThreaded(void *vargp) {
     struct args_t *args = vargp;
-    crackSingleReentrant(args->lower, args->upper, args->salt,
-        args->cryptPasswd, args->passwd);
+    crackSingleReentrant(args->lower, args->upper, args->cryptPasswd);
     return NULL;
 }
 
@@ -78,13 +75,12 @@ void *crackMultiThreaded(void *vargp) {
  * UPPER index using the function crackMultiThreaded and pin thread to CPU.
  */
 void createThread(pthread_t *thread, int lower, int upper, int cpu,
-    char salt[2], char *cryptPasswd) {
+    char *cryptPasswd) {
     if (cracked) return;
 
     struct args_t *args = (struct args_t*)malloc(sizeof(struct args_t));
     args->lower = lower;
     args->upper = upper;
-    memcpy(args->salt, salt, 2);
     args->cryptPasswd = cryptPasswd;
 
     int iret = pthread_create(thread, NULL, crackMultiThreaded, (void *)args);
@@ -92,10 +88,8 @@ void createThread(pthread_t *thread, int lower, int upper, int cpu,
 
     if (CPUAFFINITY) {
         cpu_set_t cpuset;
-
         CPU_ZERO(&cpuset);
         CPU_SET(cpu, &cpuset);
-
         iret = pthread_setaffinity_np(*thread, sizeof(cpu_set_t), &cpuset);
         if (iret) perror("pthread_setaffinity_np");
     }
@@ -105,18 +99,17 @@ void createThread(pthread_t *thread, int lower, int upper, int cpu,
  * Create NUMTHREADS threads in threads[] and partition KEYSPACESIZE search
  * space.
  */
-void createThreads(pthread_t threads[], char salt[2], char *cryptPasswd) {
+void createThreads(pthread_t threads[], char *cryptPasswd) {
     int offset = KEYSPACESIZE / NUMTHREADS;
     int from, to;
-
     for (int i = 0; i < NUMTHREADS - 1; i++) {
         from = offset * i;
         to = offset * (i + 1);
-        createThread(&threads[i], from, to, i, salt, cryptPasswd);
+        createThread(&threads[i], from, to, i, cryptPasswd);
     }
     from = offset * (NUMTHREADS - 1);
     to = KEYSPACESIZE;
-    createThread(&threads[NUMTHREADS - 1], from, to, NUMTHREADS - 1, salt,
+    createThread(&threads[NUMTHREADS - 1], from, to, NUMTHREADS - 1,
         cryptPasswd);
 }
 
@@ -138,8 +131,7 @@ void joinThreads(pthread_t threads[]) {
  */
 void crackMulti(char *username, char *cryptPasswd, int pwlen, char *passwd) {
     pthread_t threads[NUMTHREADS];
-    char salt[2] = {username[0], username[1]};
-    createThreads(threads, salt, cryptPasswd);
+    createThreads(threads, cryptPasswd);
     joinThreads(threads);
     strcpy(passwd, crackedPassword);
 }
@@ -155,9 +147,7 @@ void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1],
     size_t length = MAXLEN;
     const char delim[2] = ":";
     char *token;
-
     if (passwdStream  == NULL) perror("fopen");
-
     while(getline(&line, &length, passwdStream) != -1) {
         token = strtok(line, delim);
         strcpy(users[*count], token);
@@ -165,7 +155,6 @@ void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1],
         strcpy(passwds[*count], token);
         *count += 1;
     }
-
     fclose(passwdStream);
 }
 
@@ -210,12 +199,10 @@ void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd,
     int maxCpu) {
     int pipefd[2];
     int ret;
-
     ret = pipe(pipefd);
     if (ret < 0) perror("pipe");
     pid_t child = fork();
     if (child < 0) perror("fork");
-
     if (child == 0) {
         close(READ_END);
         dup2(WRITE_END, STDOUT_FILENO);
