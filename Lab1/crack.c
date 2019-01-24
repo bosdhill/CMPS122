@@ -30,7 +30,6 @@ char keySpace[KEYSPACESIZE] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW
 int cracked = 0;
 char crackedPassword[5];
 
-
 void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
     char *passwd) {
     char *cryptRandomPasswd;
