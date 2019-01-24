@@ -1,31 +1,29 @@
 CrackSingle...
-Cracked: 1E32
-Elapsed: 73s
+Cracked: 4Ew1
+Elapsed: 12s
 CrackSingle: PASS
 CrackSpeedy...
-Cracked: 1E32
-Cracked: bo19
-Cracked: mA5s
-Cracked: 9ei3
-Cracked: 31de
-Cracked: s36B
+Cracked: 4Ew1
+Cracked: LoE9
+Cracked: Kl62
+Cracked: 92LQ
+Cracked: MxDQ
+Cracked: P01L
 Cracked: 6 of 6
-Elapsed: 223s
+Elapsed: 40s
 CrackSpeedy: PASS
 CrackMultiple...
-Cracked: 1E32
-Cracked: bo19
-Cracked: mA5s
-Cracked: 9ei3
-Cracked: 31de
-Cracked: s36B
+Cracked: 4Ew1
+Cracked: LoE9
+Cracked: Kl62
+Cracked: 92LQ
+Cracked: MxDQ
+Cracked: P01L
 Cracked: 6 of 6
-Elapsed: 207s
+Elapsed: 37s
 CrackMultiple: PASS
 CrackStealthy...
-maxCpu = 15
-Printing GeeksQuiz from Thread 
-After Thread
-Elapsed: 1s
+Cracked: 4Ew1
+Elapsed: 14s
 Max CPU: 0.0%
-CrackStealthy: FAIL
+CrackStealthy: PASS

@@ -17,7 +17,7 @@
 #define CPUAFFINITY 1
 #define PWLEN 4
 #define HASHLEN 13
-#define MAXLEN 20
+#define MAXLEN 128
 #define NUMUSERS 6
 #define READ_END pipefd[0]
 #define WRITE_END pipefd[1]
@@ -30,10 +30,14 @@ struct args_t {
     char *passwd;
 };
 
-char keySpace[KEYSPACESIZE] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+char keySet[KEYSPACESIZE] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int cracked = 0;
 char crackedPassword[5];
 
+/*
+ * Compare all combinations of crypt hashs of ketSet from index LOWER to UPPER
+ * and save result in crackedPassword.
+ */
 void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
     char *passwd) {
     char *cryptRandomPasswd;
@@ -45,8 +49,8 @@ void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
         for (j = 0; j < KEYSPACESIZE && !cracked; j++) {
             for (k = 0; k < KEYSPACESIZE && !cracked; k++) {
                 for (w = 0; w < KEYSPACESIZE; w++) {
-                    char randomPasswd[5] = {keySpace[i], keySpace[j],
-                                            keySpace[k], keySpace[w], '\0'};
+                    char randomPasswd[5] = {keySet[i], keySet[j],
+                                            keySet[k], keySet[w], '\0'};
                     cryptRandomPasswd = crypt_r(randomPasswd, salt, &data);
                     if (strcmp(cryptRandomPasswd, cryptPasswd) == 0) {
                         strcpy(crackedPassword, randomPasswd);
@@ -59,6 +63,9 @@ void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
     }
 }
 
+/*
+ * Wrapper function for crackSingleReentrant.
+ */
 void *crackMultiThreaded(void *vargp) {
     struct args_t *args = vargp;
     crackSingleReentrant(args->lower, args->upper, args->salt,
@@ -66,6 +73,10 @@ void *crackMultiThreaded(void *vargp) {
     return NULL;
 }
 
+/*
+ * Create a thread THREAD that searches all combinations from LOWER index to
+ * UPPER index using the function crackMultiThreaded and pin thread to CPU.
+ */
 void createThread(pthread_t *thread, int lower, int upper, int cpu,
     char salt[2], char *cryptPasswd) {
     if (cracked) return;
@@ -90,6 +101,10 @@ void createThread(pthread_t *thread, int lower, int upper, int cpu,
     }
 }
 
+/*
+ * Create NUMTHREADS threads in threads[] and partition KEYSPACESIZE search
+ * space.
+ */
 void createThreads(pthread_t threads[], char salt[2], char *cryptPasswd) {
     int offset = KEYSPACESIZE / NUMTHREADS;
     int from, to;
@@ -99,13 +114,15 @@ void createThreads(pthread_t threads[], char salt[2], char *cryptPasswd) {
         to = offset * (i + 1);
         createThread(&threads[i], from, to, i, salt, cryptPasswd);
     }
-
     from = offset * (NUMTHREADS - 1);
     to = KEYSPACESIZE;
     createThread(&threads[NUMTHREADS - 1], from, to, NUMTHREADS - 1, salt,
         cryptPasswd);
 }
 
+/*
+ * Join NUMTHREADS threads in threads[]
+ */
 void joinThreads(pthread_t threads[]) {
     int iret = 0;
     for (int i = 0; i < NUMTHREADS && !cracked; i++) {
@@ -114,6 +131,11 @@ void joinThreads(pthread_t threads[]) {
     }
 }
 
+/*
+ * Find the plain-text password PASSWD of length PWLEN for the user USERNAME
+ * given the encrypted password CRYPTPASSWD by splitting KEYSPACESIZE search
+ * space amongst NUMTHREADS cores.
+ */
 void crackMulti(char *username, char *cryptPasswd, int pwlen, char *passwd) {
     pthread_t threads[NUMTHREADS];
     char salt[2] = {username[0], username[1]};
@@ -181,12 +203,14 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
 /*
  * Find the plain-text password PASSWD of length PWLEN for the user USERNAME
  * given the encrypted password CRYPTPASSWD without using more than MAXCPU
- * percent of any processor.
+ * percent of any processor. Uses IPC and a child process to stealthily crack
+ * USERNAME's password.
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd,
     int maxCpu) {
     int pipefd[2];
     int ret;
+
     ret = pipe(pipefd);
     if (ret < 0) perror("pipe");
     pid_t child = fork();
@@ -196,7 +220,7 @@ void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd,
         close(READ_END);
         dup2(WRITE_END, STDOUT_FILENO);
         crackMulti(username, cryptPasswd, pwlen, passwd);
-        ret = write(WRITE_END, (void *)crackedPassword, PWLEN + 1);
+        ret = write(WRITE_END, (void *)passwd, PWLEN + 1);
         if (ret < 0) perror("write");
         close(WRITE_END);
     } else {

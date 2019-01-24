@@ -10,12 +10,18 @@ was originally passed to the function.
     In crackMultiple, the file is first parsed using parseFile in order to
 separate the file into user names and their associated encrypted passwords. The
 arrays of user names and encrypted passwords are simultaneously traversed and
-passed to crackSingle.
-    In crackSpeedy, the parameters are passed to crackMultiple.
-    CrackStealthy is yet to be implemented.
-
+passed to crackSingle. In crackSpeedy, the parameters are passed to crackMultiple.
+    For crackStealthy, first thing I did was find the magic number of milliseconds
+to have my crack function sleep between each password check so that it doesnt
+utilize more than 15% CPU. I then tested my modified crackSingle to see how long
+it takes to crack a 4 character password in the worst case (9999), which took ~1000 seconds.
+With that information, I decided how many threads I would need in order to crack the
+worst case password in less than 60 seconds with < %15 CPU utilization, which
+happened to be 20*60 = 1200 sec, so 20 threads, 1 thread per core.
+I created a global mutex lock (since threads share the same memory), and had one
+of the threads set it when it found the password, which forces the other thread
+to exit.
 
                         Test Fails
-test failed: Extreme
-Investigation:
+
 
