@@ -11,7 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #define KEYSPACESIZE 62
-#define NUMTHREADS 20
+#define NUMTHREADS 24
 #define CPUAFFINITY 1
 #define PWLEN 4
 #define HASHLEN 13
@@ -28,65 +28,8 @@ struct args_t {
 
 char keySpace[KEYSPACESIZE] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int cracked = 0;
-int slp = 1;
 char crackedPassword[5];
-void crackStealthy(char *, char *, int, char *, int);
 
-/*
- * Parse file in path FNAME into USERS and PASSWDS, returning the COUNT of both.
- */
-void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1],
-    int *count) {
-    FILE *passwdStream = fopen(fname, "r");
-    *count = 0;
-    char *line = NULL;
-    size_t length = MAXLEN;
-    const char delim[2] = ":";
-    char *token;
-
-    if (passwdStream  == NULL) perror("fopen");
-
-    while(getline(&line, &length, passwdStream) != -1) {
-        token = strtok(line, delim);
-        strcpy(users[*count], token);
-        token = strtok(NULL, delim);
-        strcpy(passwds[*count], token);
-        *count += 1;
-    }
-
-    fclose(passwdStream);
-}
-
-/*
- * Find the plain-text password PASSWD of length PWLEN for the user USERNAME
- * given the encrypted password CRYPTPASSWD.
- */
-void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
-    crackStealthy(username, cryptPasswd, pwlen, passwd, 0);
-}
-
-/*
- * Find the plain-text passwords PASSWDS of length PWLEN for the users found
- * in the old-style /etc/passwd format file at path FNAME.
- */
-void crackMultiple(char *fname, int pwlen, char **passwds) {
-    int size;
-    char users[NUMUSERS][MAXLEN];
-    char usersCryptPasswds[NUMUSERS][HASHLEN + 1];
-    parseFile(fname, users, usersCryptPasswds , &size);
-    for (int i = 0; i < size; i++) {
-        crackSingle(users[i], usersCryptPasswds[i], pwlen, passwds[i]);
-        cracked = 0;
-    }
-}
-
-/*
- * Find the plain-text passwords PASSWDS of length PWLEN for the users found
- * in the old-style /etc/passwd format file at pathe FNAME.
- */
-void crackSpeedy(char *fname, int pwlen, char **passwds) {
-    crackMultiple(fname, pwlen, passwds);
-}
 
 void crackSingleReentrant(int lower, int upper, char salt[2], char *cryptPasswd,
     char *passwd) {
@@ -168,6 +111,70 @@ void joinThreads(pthread_t threads[]) {
     }
 }
 
+void crackMulti(char *username, char *cryptPasswd, int pwlen, char *passwd) {
+    pthread_t threads[NUMTHREADS];
+    char salt[2] = {username[0], username[1]};
+    createThreads(threads, salt, cryptPasswd);
+    joinThreads(threads);
+    strcpy(passwd, crackedPassword);
+}
+
+/*
+ * Parse file in path FNAME into USERS and PASSWDS, returning the COUNT of both.
+ */
+void parseFile(char *fname, char users[][MAXLEN], char passwds[][HASHLEN + 1],
+    int *count) {
+    FILE *passwdStream = fopen(fname, "r");
+    *count = 0;
+    char *line = NULL;
+    size_t length = MAXLEN;
+    const char delim[2] = ":";
+    char *token;
+
+    if (passwdStream  == NULL) perror("fopen");
+
+    while(getline(&line, &length, passwdStream) != -1) {
+        token = strtok(line, delim);
+        strcpy(users[*count], token);
+        token = strtok(NULL, delim);
+        strcpy(passwds[*count], token);
+        *count += 1;
+    }
+
+    fclose(passwdStream);
+}
+
+/*
+ * Find the plain-text password PASSWD of length PWLEN for the user USERNAME
+ * given the encrypted password CRYPTPASSWD.
+ */
+void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
+    crackMulti(username, cryptPasswd, pwlen, passwd);
+}
+
+/*
+ * Find the plain-text passwords PASSWDS of length PWLEN for the users found
+ * in the old-style /etc/passwd format file at path FNAME.
+ */
+void crackMultiple(char *fname, int pwlen, char **passwds) {
+    int size;
+    char users[NUMUSERS][MAXLEN];
+    char usersCryptPasswds[NUMUSERS][HASHLEN + 1];
+    parseFile(fname, users, usersCryptPasswds , &size);
+    for (int i = 0; i < size; i++) {
+        crackSingle(users[i], usersCryptPasswds[i], pwlen, passwds[i]);
+        cracked = 0;
+    }
+}
+
+/*
+ * Find the plain-text passwords PASSWDS of length PWLEN for the users found
+ * in the old-style /etc/passwd format file at pathe FNAME.
+ */
+void crackSpeedy(char *fname, int pwlen, char **passwds) {
+    crackMultiple(fname, pwlen, passwds);
+}
+
 /*
  * Find the plain-text password PASSWD of length PWLEN for the user USERNAME
  * given the encrypted password CRYPTPASSWD without using more than MAXCPU
@@ -175,9 +182,5 @@ void joinThreads(pthread_t threads[]) {
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd,
     int maxCpu) {
-    pthread_t threads[NUMTHREADS];
-    char salt[2] = {username[0], username[1]};
-    createThreads(threads, salt, cryptPasswd);
-    joinThreads(threads);
-    strcpy(passwd, crackedPassword);
+    crackMulti(username, cryptPasswd, pwlen, passwd);
 }
