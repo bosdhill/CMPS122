@@ -1,1 +1,1 @@
-LIBS = -lpthread -lcrypt -lm -pthread -O -funroll-all-loops
+LIBS = -lpthread -lcrypt -lm
