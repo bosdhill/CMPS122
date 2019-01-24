@@ -4,7 +4,7 @@
 combinations between lower and upper of an array keySet are traversed and formed
 in a four character string. That string is then passed to crypt with salt and
 compared to the cryptographic hash cryptPasswd. If it's a match, it's saved to
-crackedPassword. This function is then run in 24 separate threads, splitting
+crackedPassword. This function is then run in 20 separate threads, splitting
 the search space.
     Every function uses crackSingleReentrant. For crackStealthy, in order
 to bypass the CPU usage requirement, I forked a child process which piped the

@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #define KEYSPACESIZE 62
-#define NUMTHREADS 24
+#define NUMTHREADS 20
 #define CPUAFFINITY 1
 #define PWLEN 4
 #define HASHLEN 13
@@ -76,8 +76,6 @@ void *crackMultiThreaded(void *vargp) {
  */
 void createThread(pthread_t *thread, int lower, int upper, int cpu,
     char *cryptPasswd) {
-    if (cracked) return;
-
     struct args_t *args = (struct args_t*)malloc(sizeof(struct args_t));
     args->lower = lower;
     args->upper = upper;
@@ -102,7 +100,7 @@ void createThread(pthread_t *thread, int lower, int upper, int cpu,
 void createThreads(pthread_t threads[], char *cryptPasswd) {
     int offset = KEYSPACESIZE / NUMTHREADS;
     int from, to;
-    for (int i = 0; i < NUMTHREADS - 1; i++) {
+    for (int i = 0; i < NUMTHREADS - 1 && !cracked; i++) {
         from = offset * i;
         to = offset * (i + 1);
         createThread(&threads[i], from, to, i, cryptPasswd);
