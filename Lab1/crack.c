@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #define KEYSPACESIZE 62
-#define NUMTHREADS 20
+#define NUMTHREADS 22
 #define CPUAFFINITY 1
 #define PWLEN 4
 #define HASHLEN 13
@@ -98,7 +98,7 @@ void createThread(pthread_t *thread, int lower, int upper, int cpu,
  * space.
  */
 void createThreads(pthread_t threads[], char *cryptPasswd) {
-    int offset = KEYSPACESIZE / NUMTHREADS;
+    int offset = KEYSPACESIZE / NUMTHREADS + 1;
     int from, to;
     for (int i = 0; i < NUMTHREADS - 1 && !cracked; i++) {
         from = offset * i;
