@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #define KEYSPACESIZE 62
 #define NUMTHREADS 24
 #define CPUAFFINITY 1
@@ -17,6 +19,8 @@
 #define HASHLEN 13
 #define MAXLEN 20
 #define NUMUSERS 6
+#define READ_END pipefd[0]
+#define WRITE_END pipefd[1]
 
 struct args_t {
     int lower;
@@ -181,5 +185,26 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd,
     int maxCpu) {
-    crackMulti(username, cryptPasswd, pwlen, passwd);
+    int pipefd[2];
+    int ret;
+    ret = pipe(pipefd);
+    if (ret < 0) perror("pipe");
+    pid_t child = fork();
+    if (child < 0) perror("fork");
+
+    if (child == 0) {
+        close(READ_END);
+        dup2(WRITE_END, STDOUT_FILENO);
+        crackMulti(username, cryptPasswd, pwlen, passwd);
+        ret = write(WRITE_END, (void *)crackedPassword, PWLEN + 1);
+        if (ret < 0) perror("write");
+        close(WRITE_END);
+    } else {
+        close(WRITE_END);
+        dup2(READ_END, STDIN_FILENO);
+        wait(NULL);
+        ret = read(READ_END, (void *)passwd, PWLEN + 1);
+        if (ret < 0) perror("read");
+        close(READ_END);
+    }
 }
