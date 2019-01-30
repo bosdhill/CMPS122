@@ -7,3 +7,4 @@ core
 check.out
 .vscode
 crack
+*.tar.gz
