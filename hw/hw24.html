@@ -1,18 +1,12 @@
 <html>
+    <script src= "getmoney.js"> </script>
     <body>
-            Source account : <br>
-        <input type="text" name="sourceAcct" id = "srcAcct" /><br>
-            Destination account : <br>
-        <input type="text" name="destAcct" id = "destAcct" /><br/>
-            Amount : <br>
-        <input type="text" name="amount" id = "" /><br/>
-        <input type="submit" value="Submit" onclick="changeSubmit();">
-        <script>
-            function changeSubmit() {
-                var sourceAcct = document.getElementById("a").value;
-                var destAcct = document.getElementById ("b").value;
-                destAcct = "2325235";
-            }
-        </script>
+            <input type="text" name="sourceAcct" type="hidden" value="2325235"/><br>
+                Destination account : <br>
+            <input type="text" name="destAcct" id = "destAcct" /><br/>
+                Amount : <br>
+            <input type="text" name="amount" id = "" /><br/>
+            <input type="submit" value="Submit">
     </body>
 </html>
+

