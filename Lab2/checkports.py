@@ -5,6 +5,27 @@ HOST = '192.168.1.10'
 SKELETONKEY = 'Passepartout'
 BYTES = 1024
 CRUZID = 'bosdhill\n'
+PASSWORD = "Merlot"
+# tried
+# Gunners
+# gunners
+# GUNNERS
+# Manchester
+# MANCHESTER
+# manchester
+# Zinfandel
+# ZINFANDEL
+# zinfandel
+# merlot
+# Merlot
+
+def get_next_password_from_dictionary():
+     return PASSWORD
+
+def crack_password(port, s):
+     s.sendall(get_next_password_from_dictionary())
+     data = s.recv(BYTES)
+     print('Received %s from port %d' % (repr(data), port))
 
 def try_ports():
      fp = open("out", "r")
@@ -19,6 +40,8 @@ def try_ports():
           data = s.recv(BYTES)
           if data == 'Password: ':
                print('Received %s from port %d' % (repr(data), PORT))
+               crack_password(PORT, s)
+
 
 if __name__ == "__main__":
      try_ports()
