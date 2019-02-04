@@ -2,8 +2,8 @@ import re
 import socket
 import time
 import datetime
-# import sys
-# sys.stdout = open('port.out', 'w')
+import sys
+sys.stdout = open('port.out', 'w')
 
 HOST = '192.168.1.10'
 SKELETONKEY = 'Passepartout'
@@ -73,6 +73,7 @@ def crack_password(PORT):
 
 def try_ports():
      fp = open("out", "r")
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      for _, line in enumerate(fp):
           port = re.findall("[0-9]{5}", line)
           PORT = int(port[0])
