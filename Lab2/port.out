@@ -1,0 +1,10 @@
+Data received: Username: 
+Sending username...
+Data received: Password: 
+	Sending password: Bournemouth
+	Data received: Incorrect password, goodbye.
+
+	The password Bournemouth is incorrect.
+	Sending password: Arsenal
+	Data received: 
+	Sleep for 602 seconds at 2019-02-03 20:23:26.973039

