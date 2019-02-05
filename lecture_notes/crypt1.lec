@@ -1,0 +1,160 @@
+
+Symmetric Encryption
+Alice and Bob both have the same encryption key K
+
+K = key
+Mi = ith message of plaintext
+E = encryption function
+D = decryption function
+
+Alice encrypts Mi with K using E(Mi, K) = Ci (ciphertext)
+Bob receives Ci and decrypts with K using D(Ci, K) = Mi
+
+A -> E(Mi, K) = Ci |-------- Ci --------->> B -> D(Ci, K) = Mi
+                            Eve
+
+E and D are inverses of eachother
+E(D(Ci, K), K) = Mi
+D(E(Mi, K), K) = Ci
+
+Consider a string of bits representing the of Mi
+0100101010101010101010101010
+If an attacker can predict any one bits with a probability > 50 % given Ci,
+they win.
+That is their goal! Why? It will decrease the search space by an order of magnitude,
+for example if it was 64 bits then it would be 63 bits.
+
+Defenders goal is to make sure that
+Given any Ci, any message Mi is equally likely (beyond the length of the message, len(Ci))
+
+Eve (the observer) succeeds if she can fully recover a message M with K, but
+not if she partially recovers a message because there is no way to confirm its partially correct.
+
+Eve can attack either:
+1) Passively
+    a) she can see each only Ci
+    - Might know some part of Mi (will be yes/no, true/false, etc.)
+    b) Knows part of plaintext (Mi)
+    - Has complete previous messages
+    - Known patterns "Dear Bob"
+2) Actively
+
+Problem with rotation methods -> K is deterministic
+
+One Time Pad (Used only Once!):
+Requirement 1: Use a diff key for each message M
+- Keys must be completely independent
+- defeats plaintext, chosen plaintext => Ci for each Mi will be different,
+  so even if you have a known plaintext, Ci will be different
+
+Requirement 2: K must be as least as long as M
+- E(M, K) = [M (XOR) K] = C
+- D(C, K) = C (XOR) K = [M (XOR) K] (XOR) K = M (XOR) 0 = M
+Since K is random and =/= message, K (XOR) M will always produce an encyrption C
+
+Provably secure!
+Suppose alice sent M1 and M2 and got back C, without knowing which one was
+encrypted.
+C = M1 (XOR) K
+or
+C = M2 (XOR) K
+so
+if M1 (XOR) K (XOR) K = M1, then M2 (XOR) K (XOR) K = M2. So probability will
+always be 1/2! (by nature of XOR)
+She has a 50/50 chance of guessing any bit of C since it is M{1,2} XOR'd with K,
+independent of message and dependent on K.
+
+Limitations:
+- Used for extremely sensitive communcation with limited message size
+- K has to be as long as M -> must anticipate message length in advance
+(bc key is XOR'd, each bit once), limit on {0,1}^(len(M)) number of K's
+- K has to truly be randomly generated (hard at scale)
+- Key distribution
+    - Sender and receiver must have matching K's (how do you accomplish that?)
+
+Two-Time Pad:
+Suppose you use the same K twice
+Then C1 = E(M1, K) and C2 = E(M2, K)
+now, suppose Eve does this:
+C1 (XOR) C2 = (M1 (XOR) K) (XOR) (M2 (XOR) K)
+            = (M1 (XOR) M2) (XOR) (K (XOR) K)
+            = (M1 (XOR) M2)
+Let Q = (M1 (XOR) M2)
+So, that means
+She will know which bits match
+if Q[i] (XOR) X is 1, then M1[i] == M2[i] (M1[i] and M1[i] are both 1 or both 0)
+And which bits dont match
+if Q[i] (XOR) X is 0, then M1[i] != M2[i] (M1[i] is 0 and M2[i] is 1 or vice versa)
+
+Also means that if Eve knew M1, then M1 (XOR) Q = M2 and vice versa
+
+Modern Symmetric-Key Encryption: Block Ciphers
+
+Block Cypher:
+E = a function that takes a bit string of length b and
+    a keyspace of length k and returns a new bitstring of length b
+
+Mapping message space into itself
+
+E: {0, 1}^b X {0, 1}^k -> {0, 1}^b
+
+becomes E(M) once K is set
+
+D = E's inverse
+
+Very efficient, and secure if K is unknown and is a random permutation
+Shuffles plain text bits around in defined way based on K
+and decryption unshuffles them
+
+Issues with Block Ciphers:
+Limit on size of message that is encrypted
+- if M is smaller, pad it
+- if M is too large, partition and repeatdly apply block cipher
+If same data is encrypted twice, attacker knows (b.c deterministic)
+- Incorporate varying, known quatity, an intialization vector (IV) (salt!)
+
+ECB (Electronic Code Book):
+- simplest block cipher mode
+- split message into b-bit blocks P1, P2, ...
+- Each lock enciphered independently with
+    Ci = E(Pi, K)
+- Since K is fixed, each block is subject so same permutation
+
+Make it better:
+- Let previous block cipher feed into next block encipherings
+randomoness (becomes recursive), where the block starts out with some IV
+1. include elements of prior computation (Cipher Block Chaining)
+    3 Level Example
+    C1 = E(P1, K, IV)
+    C2 = E(P2, K, C1[0...len(IV)-1])
+    C3 = E(P3, K, C2[0...len(IV-1)])
+2.include positional information (where is it in the ECB chain?)
+    3 Level Example
+    C1 = E(P1, K, 0)
+    C2 = E(P2, K, 2)
+    C3 = E(P3, K, 3)
+
+Cant Parallelize Cipher Block Chaining Encryption, but can split up Decryption
+
+Counter Mode : Encryption
+Start off with a Nonce (equv to IV)
+and tack on a counter
+Basically:
+Encrypt Key with Nonce + Counter, then XOR Key with Plaintext to get C
+Basically randomizes key in block cipher encryption like
+
+E: {0,1}^b x {0,1}^k -> {0,1}^b and then {0,1}^b (XOR) M = C
+where
+{0,1}^k <- {0,1}^k x (Nonce and Counter)
+
+To decrypt, just swap M and C
+
+Pseudo Random Number Generators (PRNGS):
+PRNG(seed) = "random" #
+For seed length s, can produce at most 2^s distinct sequences
+
+Can be used to generate key given K
+choose a value IV
+E(M, K) = PRNG(K, IV) (XOR) M = C
+D(C, K) = C (XOR) PRNG(K, IV)
+no limit on length of key
