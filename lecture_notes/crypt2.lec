@@ -77,3 +77,114 @@ But anyone can compute hash! Not secure since over insecure channels
 MACS approach
 - Symmetric-Key approach for integrity
     - Use shared secret key K
+- uses a shared key to generate a hash on sender and receiver
+- accomplishes integrity: authentication
+
+Tag = F(K, M), tag is sent along with message
+
+HMACS: Secure MAC Fiunc from Secure Hash Function
+For K and M,
+H = hash func
+Padi, Pado = well known distinct strings (shared by bob and alice)
+K* be slightly adjusted version of K, as long as strings Pad
+
+Double hashing ->
+|| = concatenation
++ = XOR
+HMAC(M, K) = H((K* + Pado) || H ((K * or Padi) || M))
+
+MAC Security Definitions
+- Universal Unforgeability (UUF)
+    - Universal forgery: For any M, attacker can create a valid tag T
+- Selective Unforgeability (SUF)
+    - Selective forgery: For given M, attacker can create T
+- Existential Unforgeability (EUF)
+    - Existential Forgery: Attacker can create at least one
+    {M,T} that was not created by a legitimate signer
+
+Selective might be enough, since you want your message to
+not be forged, which is the set of messages that might be enough
+
+EUF => SUF => UUF
+
+MACS: Usage Considerations
+- Check for modifications on a file
+- Check integrity of files without reMACing whole thing
+    (MERKEL TREES BROH!!!!)
+- MACs do not provide confidentiality, can leak info
+about the message (meta-data, http, etc.)
+
+Auth encryption: Integrity and Confidentiality!
+
+Combine CPA-secure encryption schemes and EUF MACS:
+1. Encrypt and auth
+    - send {C,T} where C = E(M, Ke) and T = MAC(M, Km)
+    - Recevier decrypts C and verifies T or discards
+2.  Authenticate and then encrypt
+    - Send {C,T} where T = MAC(M, Km) and C= E(M||T, Ke)
+    - Receiver decrypts C and verifies T or discards
+3.  Encrypt then authenticate
+    - Send {C,T} where C= E(M, Ke) and T = MAC(C, Km)
+    - Receiver verifies T then decrypts C, or discards
+
+MACS provide integrity not confidentiality, could leak info
+in case 1. Also may be deterministic. If using same k twice,
+it will be. If tags are same, you know they sent same message.
+
+In case 2
+- decryption may fail due to a padding error
+- message may be rejected if tag is invalid
+- figuring out length of message without padding not CCA secure
+(Chosen Cipher Text) between failure cases
+
+In case 3
+Only one kind of error,verifies first then decrypts (otherwise
+error is for invalid Tag)
+
+EUF => attacker cant create valid {C,T}
+
+
+Public Key Cryptography
+asymeetric-key encryption
+- different key to encrypt, different key to decrypt
+rather than symmetric, which uses the same key (hard to share!)
+- Ke and E and D wouldnt allow Eve to infer Kd
+- If bob can generate a pair Ke, Kd that has this property
+for E and D, Bob can publish Ke for whole world to see
+(cuz only bob could decrypt)
+
+(Bob) generates Ke and Kd
+(Bob) Gives Ke to world (inlc. Alice)
+(Alice) encrypts something with Ke and sends to Bob
+(Bob) Decrypts with D, but cant authenticates
+
+- Ek needs to be one way, such that Ek-1(x) is intractable
+- So encryption function needs to be non-invertible unless
+you have Kd
+- So, only Dkd(X) = Eke^-1(X)
+- RSA!
+
+Number Theory Reminders
+Efficient Multiplication and Exponentiation
+    if A and B have N bits each
+        Can multiple them in O(N^2) time
+        Can exponentiate mod p (which is a^b mod p or b^a mod p ) in O(N^3)
+
+Totient function phi
+
+phi(N) = # of coprimes of N that > 1
+ex:
+Phi(14) = |{12, 11, 9, 5, 3 }| = 5
+if N is prime, it will return # of numbers < N (N - 1)
+
+Given A (relatively prime to N), a^phi(N) = 1 mod n (??)
+
+Finding Primes Quickly
+
+Add randomoness with IV to make sure each message isnt the
+same looking for each ciphertext
+
+private symmetric key!! encrypted witha public key
+send that across
+bootstrap private symmetric key, and use shares key
+to communicate over channel

@@ -1,0 +1,59 @@
+Digital Signatures
+How notaries w0rk
+Bind signature to specific document
+
+hash collision would result in a same signature
+verifying a different message (document)
+
+Agreeing on Secret Keys (w.o prior arrangement)
+Diffie Hellman Key Exchange
+-> Public key techology
+DHE protocol (works against passive but not active)
+fails integrity (authentication)!
+Mallory would intercept the exponents and then
+become intermediary between alice and bob
+
+
+How to communicate with someone new?
+need to authenticate!!
+How?
+Trusted Authorities,
+where that trusted auth public key is authorized
+(like 0000000000)
+Centralizes authentication (Bottleneck?, Single Point of Failure)
+
+
+This brings us to Trust Anchors
+Suppose 3rd party distributes their key so everyone has it
+we can then bootstrap trust as long as we trust 3rd party
+(browsers come with root certificates)
+basing validation on your trust with 3rd party
+(like Verisign)
+
+Analyzing Found Certs
+- > How we get the cert doesnt affect its utility
+- > Who gave us cert doesnt matter
+- > Possision of a cert doesnt establish identity
+- > However:
+        - If they cant decrypt data with Kkate,
+        then they probably have Kkate-1
+        - Same if they cant sign with Kkate
+
+Cant scale, so use hiearchy!
+
+Queen
+{Philip... key is 0x..}Kq-1
+{William...key is 0x..}Kp-1
+{George...key is 0x..}Kw-1
+{Charlote...key ...}Kg-1
+
+
+Certificate Authorities (CA) are trusted PArties
+- Operate offline
+-
+
+Trust on first use
+(Do you want to accept this? (github bruhh ssh,))
+
+Attacker would have to know that user never connected
+before and be in the middle
