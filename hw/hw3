@@ -8,9 +8,9 @@ containing the number 3 from Bob. What numbers could Alice and Bob have sent?
 Sol:
     Bob and Alice got the same 3 flips of the coin. I'm assuming this is their key.
     They must have used the same key (which is the same length as message), otherwise
-    it is impossible to determine their messages.
+    it is impossible to determine their messages as Eve.
 
-    Alice intercepts
+    Eve intercepts
     Ca = 101 = 5 -> alice
     Cb = 011 = 3 -> bob
 
@@ -68,17 +68,31 @@ Sol:
 
 4. Alice and Bob want to communicate secretly, but they aren’t sure of the best
 way to start. For each attempt, state whether their emails are secure against
-    (1) a passive attacker that can ob- serve their emails and
+    (1) a passive attacker that can observe their emails and
     (2) an active attacker that can observe, replace, or omit their emails.
 Explain your answers!
+sol:
+    Eve - Passive
+    Molly - Active
 
     1. First, Alice and Bob decide to use Diffie-Helman Key Exchange. Bob emails
     Alice g^x and Alice emails Bob g^y . Then they use a secret key g^(xy) to
     encrypt further emails.
+        (1) Secure against passive attacker since if Eve observed g^x or g^y,
+    she would not be able to compute g^(xy), the secret key.
+        (2) If Molly were to observe and replace Alice's emails to Bob with her own
+    g^x', then she would effectively become an intermediary between Alice and
+    Bob. She would have a secret key for Alice and Bob. (No integrity!)
 
     2. Next, Alice and Bob try exchanging public keys over email. Alice sends
     Bob messages encrypted with his public key and Bob sends Alice messages
     encrypted with her public key.
+        (1) Eve would not be able to observe anything since she doesnt have
+    the private decryption keys.
+        (2) Molly, acting as an intermediary would be able to receive and
+    decrypt Alice's messages with her decryption key, then encrypt and send
+    messages to Bob. This would allow her to act as Alice towards Bob and vice
+    versa.
 
     3. Instead of using email to exchange keys, Alice and Bob decide to meet at
     a coffee shop to exchange public encryption and signing keys. However, Alice
@@ -86,9 +100,23 @@ Explain your answers!
     shop and managed to take a picture of their public keys while pretending to
     take a selfie. Later they encrypt their emails using the other’s public
     encryption key, and sign the result using their own private signing key.
+        (1)
+        (2)
 
     4. Next, Alice and Bob decide to row a boat out into the Pacific ocean,
     getting under a tarp and generate two keys by rolling a bunch of dice:
     one for encryption and one for signing. Later they sign their emails
     using an HMAC with the signing key and encrypt the body with the encryption
     key.
+        (1)
+        (2)
+
+5. Consider the counter mode of operation. For each of the following scenarios,
+state whether the messages encrypted by this algorithm are still secure. If
+they are, explain why. If not, explain how an attacker can break the security of
+the messages.
+    1. The attacker learns the seed used to initialize the PRNG that generates
+    the nonce.
+    2. The attacker is able to control the value of the nonce.
+    3. The attacker is able to control the seed used to initialize the PRNG that
+    generates the nonce.
