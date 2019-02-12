@@ -1,0 +1,70 @@
+1. Alice and Bob are each creating a one-time pad so they can exchange secret numbers.
+First, Alice flips a coin three times, then Bob does the same. As Bob is flipping his
+coin for the third time, Eve overhears him exclaim:
+    “Wow, we got the same three flips! What are the odds?!”
+Later, Eve intercepts a message containing the number 5 from Alice and one
+containing the number 3 from Bob. What numbers could Alice and Bob have sent?
+
+Sol:
+    Bob and Alice got the same 3 flips of the coin. I'm assuming this is their key.
+    They must have used the same key (which is the same length as message), otherwise
+    it is impossible to determine their messages.
+
+    Alice intercepts
+    Ca = 101 = 5 -> alice
+    Cb = 011 = 3 -> bob
+
+    It follows that
+    Ca (XOR) Cb = 101 (XOR) 011 = 110 = Ma (XOR) Mb
+
+    So,
+    (Ma, Mb) = (000, 110) or (111, 001) or (110,000) or (001, 111)
+             = (0,6) or (8,1) or (6,0) or (1,8)
+
+    Alice and Bob could have sent eachother either 1 and 8, or 6 and 0.
+
+2. Suppose you are given a pseudo-random number generator function R that takes
+a 128-bit seed s, an integer n, and an integer m, and outputs the nth (inclusive)
+through mth (exclusive) pseudo-random bits. Define the key generation algorithm,
+the encryption algorithm, and the decryption algorithm you would need to use R
+for secure symmetric-key encryption.
+
+Sol:
+    Suppose IV is some intialization vector.
+
+    Symmetric-Key-Generation Algorithm:
+    K = KG(N, M) = R(IV, N - IV, M + IV)
+
+    Encryption Algorithm:
+    E(M, K) = K (XOR) M = C
+
+    Decryption Algorithm:
+    D(C, K) = K (XOR) C = M
+
+3. Your security consulting firm is hired by a secretive government agency that
+wants you to steal a mysterious device from a famous number theorist. The job
+almost goes awry when his girlfriend shows up just as you are leaving his office,
+but you manage to retrieve the device.
+    When you get it back to your lab, you decide to play around with it. After a
+while, you discover that it does something you didn’t think was possible: it can
+factor any prime number in just a few seconds.
+    You decide
+    (1) that you weren’t paid nearly enough for this job, and
+    (2) that there are too many secrets in the world.
+    Design a decryption function D(C, KE ) that efficiently decrypts any
+RSA-encrypted ciphertext C based on the public key KE that was used to encrypt
+it. You can represent the function implemented by the device as
+    F(n) = p,q,... where n is any number and p,q,... are its prime factors.
+
+Sol:
+    D' is the standard RSA decryption function
+
+    def D(C, KE):
+        extract n, e from KE
+        F(n) = p, q
+        let k = (p - 1)(q - 1)
+        let KD = e^-1 mod k
+        return D'(C, KD)
+
+
+
