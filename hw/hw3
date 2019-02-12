@@ -66,5 +66,29 @@ Sol:
         let KD = e^-1 mod k
         return D'(C, KD)
 
+4. Alice and Bob want to communicate secretly, but they aren’t sure of the best
+way to start. For each attempt, state whether their emails are secure against
+    (1) a passive attacker that can ob- serve their emails and
+    (2) an active attacker that can observe, replace, or omit their emails.
+Explain your answers!
 
+    1. First, Alice and Bob decide to use Diffie-Helman Key Exchange. Bob emails
+    Alice g^x and Alice emails Bob g^y . Then they use a secret key g^(xy) to
+    encrypt further emails.
 
+    2. Next, Alice and Bob try exchanging public keys over email. Alice sends
+    Bob messages encrypted with his public key and Bob sends Alice messages
+    encrypted with her public key.
+
+    3. Instead of using email to exchange keys, Alice and Bob decide to meet at
+    a coffee shop to exchange public encryption and signing keys. However, Alice
+    and Bob didn’t notice that Eve was sitting at the next table in the coffee
+    shop and managed to take a picture of their public keys while pretending to
+    take a selfie. Later they encrypt their emails using the other’s public
+    encryption key, and sign the result using their own private signing key.
+
+    4. Next, Alice and Bob decide to row a boat out into the Pacific ocean,
+    getting under a tarp and generate two keys by rolling a bunch of dice:
+    one for encryption and one for signing. Later they sign their emails
+    using an HMAC with the signing key and encrypt the body with the encryption
+    key.
