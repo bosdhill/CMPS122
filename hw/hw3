@@ -80,21 +80,22 @@ sol:
     encrypt further emails.
         (1) If Eve doesn't know g then it's secure against passive
     attacker since if Eve observed g^x or g^y, she would not be able to compute
-    g^(xy), the secret key. But, if Eve knew g and p, she could find x = log_g(g^x)
+    g^(xy), the secret key. But, if Eve knew g, she could find x = log_g(g^x)
     and y = log_g(g^y) and then compute the secret key g^(xy).
         (2) If Molly were to observe and replace Alice's emails to Bob with her own
     g^x', then she would effectively become an intermediary between Alice and
-    Bob. She would have a secret key for Alice and Bob. No integrity!
+    Bob. She would create a secret key for Alice and Bob, respectively.
+    No integrity!
 
     2. Next, Alice and Bob try exchanging public keys over email. Alice sends
     Bob messages encrypted with his public key and Bob sends Alice messages
     encrypted with her public key.
         (1) Eve knows Alice and Bob's public encryption keys, since they were
-        sent over email. But, since seh doesn't know their private dec
+    sent over email. But, since seh doesn't know their private dec
         (2) Molly could intercept the initial public key exchange. Alice would
-        send Molly her key, and Molly would send her key to Alice. Molly would
-        then do the same with Bob. Molly would then be an intermediary between
-        Alice and Bob, who would be using her public keys to encrypt messages.
+    send Molly her key, and Molly would send her key to Alice. Molly would
+    then do the same with Bob. Molly would then be an intermediary between
+    Alice and Bob, who would be using her public keys to encrypt messages.
 
     3. Instead of using email to exchange keys, Alice and Bob decide to meet at
     a coffee shop to exchange public encryption and signing keys. However, Alice
@@ -103,11 +104,11 @@ sol:
     take a selfie. Later they encrypt their emails using the other’s public
     encryption key, and sign the result using their own private signing key.
         (1) Since Eve did not ascertain their signing key, she would not be able
-        to get any information from the ciphertext.
+    to get any information from the ciphertext.
         (2) Since Alice is using Bob's signing key, and assuming she knows her
-        own, Molly would not be able to pose as either with her own signing key.
-        This is because integrity was introduced with Alice and Bob knowing
-        eachother's private signing keys and swapping them.
+    own, Molly would not be able to pose as either with her own signing key.
+    This is because integrity was introduced with Alice and Bob knowing
+    eachother's private signing keys and swapping them.
 
     4. Next, Alice and Bob decide to row a boat out into the Pacific ocean,
     getting under a tarp and generate two keys by rolling a bunch of dice:
@@ -115,11 +116,11 @@ sol:
     using an HMAC with the signing key and encrypt the body with the encryption
     key.
         (1) Eve wouldn't be able to ascertain any information by observing since
-        she can't discover their private encryption keys.
+    she can't discover their private encryption keys.
         (2) Molly also wouldn't be able to ascertain any information, since the
-        encryption key isnt public and there is a private signing key which
-        enforces integrity. Also, since the signing of the email is encrypted
-        with HMAC, there is an extra layer of protection.
+    encryption key isnt public and there is a private signing key which
+    enforces integrity. Also, since the signing of the email is encrypted
+    with HMAC, there is an extra layer of protection.
 
 5. Consider the counter mode of operation. For each of the following scenarios,
 state whether the messages encrypted by this algorithm are still secure. If
@@ -128,7 +129,8 @@ the messages.
 
     1. The attacker learns the seed used to initialize the PRNG that generates
     the nonce.
-
+        If the attacker learns the seed, that means they could generate the
+    same set of random numbers that subsume the nonce, making it deterministic.
 
     2. The attacker is able to control the value of the nonce.
         It would no longer be secure. If the attacker is able to control the
