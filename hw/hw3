@@ -17,7 +17,7 @@ Sol:
     It follows that
     Ca (XOR) Cb = 101 (XOR) 011 = 110 = Ma (XOR) Mb
 
-    So,
+    So, the unordered pairs of possible numbers are
     (Ma, Mb) = (000, 110), (110,000), (101, 011), (010, 100)
              = (0, 6), (1, 7), (3, 5), (4, 2)
 
@@ -130,21 +130,22 @@ they are, explain why. If not, explain how an attacker can break the security of
 the messages.
 
     Assuming the Block Cipher is AES_128 and that the nonce concat with the
-    counter are its seed.
+    counter are its counter, with the key as its seed.
 
     1. The attacker learns the seed used to initialize the PRNG that generates
     the nonce.
         This wouldn't provide the attacker with enough information to predict
-    the keystream. Therefore, it would remain secure.
+    the keystream with a high enough probability. Therefore, it would
+    remain secure.
 
     2. The attacker is able to control the value of the nonce.
         It would no longer be secure. If the attacker is able to control the
     value of the nonce, that would make the IV (nonce concat with counter)
     the same each time, and therefore deterministic. That makes the algorithm
-    susceptible to CPA.
+    susceptible to CPA, and insecure.
 
     3. The attacker is able to control the seed used to initialize the PRNG that
     generates the nonce.
-        This would make the algorithm insecure. The nonce is concatenated with
-    the
-
+        This would make the algorithm insecure, because the nonce would become
+    deterministic. The attacker would have access to the counter, and the
+    PRNG that produces the nonce. Eventually, they would be able to
