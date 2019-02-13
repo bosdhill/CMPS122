@@ -148,4 +148,5 @@ the messages.
     generates the nonce.
         This would make the algorithm insecure, because the nonce would become
     deterministic. The attacker would have access to the counter, and the
-    PRNG that produces the nonce. Eventually, they would be able to
+    PRNG that produces the nonce. Eventually, they would be able to predict
+    the value of the nonce.
