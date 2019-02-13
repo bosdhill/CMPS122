@@ -18,10 +18,8 @@ Sol:
     Ca (XOR) Cb = 101 (XOR) 011 = 110 = Ma (XOR) Mb
 
     So,
-    (Ma, Mb) = (000, 110) or (111, 001) or (110,000) or (001, 111)
-             = (0,6) or (8,1) or (6,0) or (1,8)
-
-    Alice and Bob could have sent eachother either 1 and 8, or 6 and 0.
+    (Ma, Mb) = (000, 110), (110,000), (101, 011), (010, 100)
+             = (0, 6), (1, 7), (3, 5), (4, 2)
 
 2. Suppose you are given a pseudo-random number generator function R that takes
 a 128-bit seed s, an integer n, and an integer m, and outputs the nth (inclusive)
@@ -33,7 +31,7 @@ Sol:
     Suppose IV is some intialization vector.
 
     Symmetric-Key-Generation Algorithm:
-    K = KG(N, M) = R(IV, N - IV, M + IV)
+    K = KG(s, N, M) = R(s (XOR) IV, N, M)
 
     Encryption Algorithm:
     E(M, K) = K (XOR) M = C
@@ -51,13 +49,13 @@ factor any prime number in just a few seconds.
     You decide
     (1) that you weren’t paid nearly enough for this job, and
     (2) that there are too many secrets in the world.
-    Design a decryption function D(C, KE ) that efficiently decrypts any
+    Design a decryption function D(C, KE) that efficiently decrypts any
 RSA-encrypted ciphertext C based on the public key KE that was used to encrypt
 it. You can represent the function implemented by the device as
     F(n) = p,q,... where n is any number and p,q,... are its prime factors.
 
 Sol:
-    D' is the standard RSA decryption function
+    Suppose D' is the standard RSA decryption function
 
     def D(C, KE):
         extract n, e from KE
@@ -82,17 +80,17 @@ sol:
     she would not be able to compute g^(xy), the secret key.
         (2) If Molly were to observe and replace Alice's emails to Bob with her own
     g^x', then she would effectively become an intermediary between Alice and
-    Bob. She would have a secret key for Alice and Bob. (No integrity!)
+    Bob. She would have a secret key for Alice and Bob. No integrity!
 
     2. Next, Alice and Bob try exchanging public keys over email. Alice sends
     Bob messages encrypted with his public key and Bob sends Alice messages
     encrypted with her public key.
-        (1) Eve would not be able to observe anything since she doesnt have
-    the private decryption keys.
-        (2) Molly, acting as an intermediary would be able to receive and
-    decrypt Alice's messages with her decryption key, then encrypt and send
-    messages to Bob. This would allow her to act as Alice towards Bob and vice
-    versa.
+        (1) Eve knows Alice and Bob's public encryption keys, since they were
+        sent over email. But, since seh doesn't know their private dec
+        (2) Molly could intercept the initial public key exchange. Alice would
+        send Molly her key, and Molly would send her key to Alice. Molly would
+        then do the same with Bob. Molly would then be an intermediary between
+        Alice and Bob, who would be using her public keys to encrypt messages.
 
     3. Instead of using email to exchange keys, Alice and Bob decide to meet at
     a coffee shop to exchange public encryption and signing keys. However, Alice
@@ -100,14 +98,19 @@ sol:
     shop and managed to take a picture of their public keys while pretending to
     take a selfie. Later they encrypt their emails using the other’s public
     encryption key, and sign the result using their own private signing key.
-        (1)
-        (2)
+        (1) Since Eve did not ascertain their signing key, she would not be able
+        to get any information from the ciphertext.
+        (2) Since Alice is using Bob's signing key, and assuming she knows her
+        own, Mallory would not be able to pose as either with her own signing key.
+        This is because integrity was introduced with Alice and Bob knowing
+        eachother's private signing keys and swapping them.
 
     4. Next, Alice and Bob decide to row a boat out into the Pacific ocean,
     getting under a tarp and generate two keys by rolling a bunch of dice:
     one for encryption and one for signing. Later they sign their emails
     using an HMAC with the signing key and encrypt the body with the encryption
     key.
+    R = Ke, Kd
         (1)
         (2)
 
