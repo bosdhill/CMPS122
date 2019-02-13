@@ -28,10 +28,11 @@ the encryption algorithm, and the decryption algorithm you would need to use R
 for secure symmetric-key encryption.
 
 Sol:
-    Suppose IV is some intialization vector.
+    Suppose IV is some intialization vector, and sizeof returns the bit length
+    of M.
 
     Symmetric-Key-Generation Algorithm:
-    K = KG(s, N, M) = R(s (XOR) IV, N, M)
+    K = KG(s, 0, sizeof(M)) = R(s (XOR) IV, 0, sizeof(M))
 
     Encryption Algorithm:
     E(M, K) = K (XOR) M = C
@@ -73,11 +74,14 @@ sol:
     Eve - Passive
     Molly - Active
 
+    Eve g^x, g^y, g, p logg(g^x) = x, logg(g^y)
     1. First, Alice and Bob decide to use Diffie-Helman Key Exchange. Bob emails
     Alice g^x and Alice emails Bob g^y . Then they use a secret key g^(xy) to
     encrypt further emails.
-        (1) Secure against passive attacker since if Eve observed g^x or g^y,
-    she would not be able to compute g^(xy), the secret key.
+        (1) If Eve doesn't know g then it's secure against passive
+    attacker since if Eve observed g^x or g^y, she would not be able to compute
+    g^(xy), the secret key. But, if Eve knew g and p, she could find x = log_g(g^x)
+    and y = log_g(g^y) and then compute the secret key g^(xy).
         (2) If Molly were to observe and replace Alice's emails to Bob with her own
     g^x', then she would effectively become an intermediary between Alice and
     Bob. She would have a secret key for Alice and Bob. No integrity!
@@ -101,7 +105,7 @@ sol:
         (1) Since Eve did not ascertain their signing key, she would not be able
         to get any information from the ciphertext.
         (2) Since Alice is using Bob's signing key, and assuming she knows her
-        own, Mallory would not be able to pose as either with her own signing key.
+        own, Molly would not be able to pose as either with her own signing key.
         This is because integrity was introduced with Alice and Bob knowing
         eachother's private signing keys and swapping them.
 
@@ -110,16 +114,31 @@ sol:
     one for encryption and one for signing. Later they sign their emails
     using an HMAC with the signing key and encrypt the body with the encryption
     key.
-    R = Ke, Kd
-        (1)
-        (2)
+        (1) Eve wouldn't be able to ascertain any information by observing since
+        she can't discover their private encryption keys.
+        (2) Molly also wouldn't be able to ascertain any information, since the
+        encryption key isnt public and there is a private signing key which
+        enforces integrity. Also, since the signing of the email is encrypted
+        with HMAC, there is an extra layer of protection.
 
 5. Consider the counter mode of operation. For each of the following scenarios,
 state whether the messages encrypted by this algorithm are still secure. If
 they are, explain why. If not, explain how an attacker can break the security of
 the messages.
+
     1. The attacker learns the seed used to initialize the PRNG that generates
     the nonce.
+
+
     2. The attacker is able to control the value of the nonce.
+        It would no longer be secure. If the attacker is able to control the
+    value of the nonce, that would make the IV (nonce concat with counter)
+    the same each time, and therefore deterministic. That means if the attacker
+    knew the ordering of the messages, they would just produce numbers in the
+    same order via AES_128 since the nonce concat with counter seeds the PRNG,
+    and would produce the same random sequence for each seed.
+
     3. The attacker is able to control the seed used to initialize the PRNG that
     generates the nonce.
+        This would make the algorithm insecure. The nonce is concatenated with
+    the
