@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 import socket
 import time
@@ -24,22 +25,25 @@ def connect_with_pass():
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      print("Sending skeletonkey...")
-     s.sendall(SKELETONKEY)
+     s.sendall(bytes(SKELETONKEY, 'utf-8'))
      data = s.recv(BYTES)
-     print("Data received: %s" % data)
-     print("Sending username...")
-     s.sendall(CRUZID)
-     data = s.recv(BYTES)
-     print("Received: %s" % data)
-     s.sendall(password)
-     data = s.recv(BYTES)
-     print("Received: %s" % data)
-     s.sendall("binary\n")
-     data = s.recv(BINBYTES)
-     print("Received: %s" % data)
-     s.sendall("source\n")
-     data = s.recv(BINBYTES)
-     print("Received: %s" % data)
+     while True:
+          x = input(data.decode('utf-8'))
+          s.sendall(bytes(x, 'utf-8'))
+          data = s.recv(BYTES)
+     # print("Sending username...")
+     # s.sendall(CRUZID)
+     # data = s.recv(BYTES)
+     # print("Received: %s" % data)
+     # s.sendall(password)
+     # data = s.recv(BYTES)
+     # print("Received: %s" % data)
+     # s.sendall("binary\n")
+     # data = s.recv(BINBYTES)
+     # print("Received: %s" % data)
+     # s.sendall("source\n")
+     # data = s.recv(BINBYTES)
+     # print("Received: %s" % data)
 
 # Assuming NO initial lockout
 def crack_password(PORT):
