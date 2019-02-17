@@ -12,8 +12,12 @@ stepi
 for gdb:
 set breakpoint where httpUnlock occurs
 when running the file, curl localhost:MY_PORT from grunhilda
-
+need to get unlock() to run
+buffer that it reads into is argv
+argv[0] = program name
+argv[1] = port # (10247\nNOPNOPNOPNOPNOPNOPreturn addr)
 
 Curl:
 when your curl server (curl 192.168.1.19:10247) you get http response
 run that on chrome
+
