@@ -1,0 +1,19 @@
+remember to chmod +x binary!
+for gdb
+gdb binary
+layout asm
+set follow-fork-mode child
+run MY_PORT (PORT = 10247)
+after connecting to port
+stepi
+(Note: "set detach-on-fork off", "info inferiors", and "inferior <number>" will help you get back to the main process once the forked process finishes.)
+
+
+for gdb:
+set breakpoint where httpUnlock occurs
+when running the file, curl localhost:MY_PORT from grunhilda
+
+
+Curl:
+when your curl server (curl 192.168.1.19:10247) you get http response
+run that on chrome

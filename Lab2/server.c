@@ -36,7 +36,7 @@ static void handleClient(int sock) {
         perror("socket receive");
     else if (rcvd == 0)
         perror("client disconnected without reason");
-    else 
+    else
         httpRequest(sock, request);
 
     shutdown(sock, SHUT_RDWR);
