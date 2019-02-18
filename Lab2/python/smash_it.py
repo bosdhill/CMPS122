@@ -161,6 +161,8 @@ def scan_ports():
           port = re.findall("[0-9]{5}", line)
           PORT = int(port[0])
           s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          if PORT == 10243:
+               continue
           s.connect((HOST, PORT))
           s.sendall(to_bytes(SKELETONKEY))
           data = s.recv(BYTES)
