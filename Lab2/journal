@@ -4,10 +4,10 @@ gdb binary
 layout asm
 set follow-fork-mode child
 run MY_PORT (PORT = 10247)
-after connecting to port
+after connecting to port (locally)
 stepi
 (Note: "set detach-on-fork off", "info inferiors", and "inferior <number>" will help you get back to the main process once the forked process finishes.)
-
+frame, where or bt prints line #
 
 for gdb:
 set breakpoint where httpUnlock occurs
@@ -21,3 +21,22 @@ Curl:
 when your curl server (curl 192.168.1.19:10247) you get http response
 run that on chrome
 
+kill your pid that is running your server locally
+with
+ps aux | grep PORT > check
+kill -9 pid
+
+
+FOR GDB:
+Run gdb on binary
+Do checkports on localhost
+thennn do stepi
+
+its lookihng for student.dat file locally, which is the config file you
+swooped from server earlier
+server creates a port.backdoor and port.stats file
+put break at main and step through?
+
+return address of time is 0x8048ee9 // fuck this one
+return address of time is 0x8048fd7 // where time is called, main+385
+return address of unlock in main is 0x8048fe1
