@@ -27,8 +27,7 @@ def parse():
 
 def buffer_overflow():
      smash()
-     subprocess.call(['chmod', '+x', 'gethtml.sh'])
-     subprocess.call(['./gethtml.sh', HOST, str(PORT)])
+     subprocess.call(['scripts/./gethtml.sh', HOST, str(PORT)])
      print_redirect_url()
 
 def to_bytes(msg):
@@ -211,10 +210,3 @@ def main():
 
 if __name__ == "__main__":
      main()
-
-#      pass
-#     crack_password(10247)
-
-     # auto_connect()
-     # smash()
-     # print_redirect_url()
