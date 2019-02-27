@@ -55,14 +55,9 @@ Accept:
 enum type getReqType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
-        char filepath[256];
-        strcpy(filepath, getFilePath(request, "GET"));
-        printf("filepath: %s\n", filepath);
         return GET;
     }
     if ((req_type = strstr(request, "POST")) != NULL && req_type == request) {
-        getFilePath(request, "POST");
-        getContent(request);
         return POST;
     }
     return NONE;
@@ -82,6 +77,9 @@ void httpRequest(int sock, char *request) {
     printf("sock: %d\n", sock);
 
     if (getReqType(request) == GET) {
+        char filepath[256];
+        strcpy(filepath, getFilePath(request, "GET"));
+        printf("filepath: %s\n", filepath);
         send(sock, (void *)handleGet("test"), sizeof("SUCCESS\n"), 0);
     }
 }
