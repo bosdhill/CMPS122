@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #define BYTES 2048
 enum type{POST, GET};
@@ -23,6 +25,11 @@ static void binary(int sock, char *fname) {
    }
 }
 
+
+char *handleGet(char *pathname) {
+    return "SUCCESS";
+}
+
 // get type of request
 enum type getType(char *request) {
     return strstr(request, "GET") != NULL ? GET: POST;
@@ -32,6 +39,11 @@ enum type getType(char *request) {
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
-    printf("type of request: %s\n", getType(request) ? "GET" : "POST");
+
+    if (getType(request) == GET) {
+        send(sock, (void *)handleGet("test"), sizeof("SUCCESS"), 0);
+    }
+
+
 }
 
