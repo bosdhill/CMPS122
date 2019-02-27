@@ -16,6 +16,7 @@
 #define VALID 1
 #define INVALID 0
 enum type{POST, GET, NONE};
+char *filepath;
 
 // when sending files back
 static void binary(int sock, char *fname) {
@@ -33,7 +34,7 @@ char *handleGet(char *pathname) {
 }
 
 // strtok by \n
-// check first of line of each with getBlah
+// check first of line of each with get
 /*
 GET /hello/world HTTP/1.1
 Host: localhost:4200
