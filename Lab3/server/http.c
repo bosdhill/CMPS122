@@ -31,7 +31,7 @@ static void binary(int sock, char *fname) {
 }
 
 // extract file path from request body
-char *getFilePath(char *request) {
+char *getFilePath(char *request, char *type) {
 
 }
 
@@ -56,11 +56,11 @@ Accept:
 enum type getType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
-        filepath = getFilePath(request);
+        filepath = getFilePath(request, "GET");
         return GET;
     }
     if ((req_type = strstr(request, "POST")) != NULL && req_type == request) {
-        filepath = getFilePath(request);
+        filepath = getFilePath(request, "POST");
         content = getContent(request);
         return POST;
     }
