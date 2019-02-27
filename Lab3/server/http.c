@@ -31,12 +31,13 @@ static void binary(int sock, char *fname) {
 }
 
 // extract file path from request body
-char *getFilePath(char *request, char *type) {
-
+void getFilePath(char *request, char *req_type) {
+    filepath = strtok(request, req_type);
+    filepath = strtok(filepath, "HTTP/1.1");
 }
 
 // extract content from request body
-char *getContent(char *content) {
+void getContent(char *content) {
 
 }
 
@@ -53,15 +54,16 @@ User-Agent: curl/7.47.0
 Accept:
 */
 // get type of request
-enum type getType(char *request) {
+enum type getReqType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
-        filepath = getFilePath(request, "GET");
+        getFilePath(request, "GET");
+        printf("filepath: %s\n", filepath);
         return GET;
     }
     if ((req_type = strstr(request, "POST")) != NULL && req_type == request) {
-        filepath = getFilePath(request, "POST");
-        content = getContent(request);
+        getFilePath(request, "POST");
+        getContent(request);
         return POST;
     }
     return NONE;
@@ -80,7 +82,7 @@ void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
 
-    if (getType(request) == GET) {
+    if (getReqType(request) == GET) {
         send(sock, (void *)handleGet("test"), sizeof("SUCCESS\n"), 0);
     }
 }
