@@ -32,12 +32,6 @@ char *handleGet(char *pathname) {
     return "BOOLIN\n";
 }
 
-// scrape line by line and check if that's a valid get request
-int checkValid(char *request) {
-    return 0;
-}
-
-
 // strtok by \n
 // check first of line of each with getBlah
 /*
