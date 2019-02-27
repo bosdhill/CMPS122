@@ -16,8 +16,6 @@
 #define VALID 1
 #define INVALID 0
 enum type{POST, GET, NONE};
-char *filepath;
-char *content;
 
 // when sending files back
 static void binary(int sock, char *fname) {
@@ -31,9 +29,9 @@ static void binary(int sock, char *fname) {
 }
 
 // extract file path from request body
-void getFilePath(char *request, char *req_type) {
-    filepath = strtok(request, req_type);
-    filepath = strtok(filepath, "HTTP/1.1");
+char *getFilePath(char *request, char *req_type) {
+    strtok(request, " ");
+    return strtok(NULL, " ");
 }
 
 // extract content from request body
@@ -57,7 +55,8 @@ Accept:
 enum type getReqType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
-        getFilePath(request, "GET");
+        char filepath[256];
+        strcpy(filepath, getFilePath(request, "GET"));
         printf("filepath: %s\n", filepath);
         return GET;
     }
@@ -77,7 +76,7 @@ int checkHeader(char *request, char *header) {
     return INVALID;
 }
 
-// \n\n == content
+// \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
