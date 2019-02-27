@@ -1,0 +1,12 @@
+Phase I:
+GET preconditions:
+	1. File must exist
+	2. Can't request a directory
+POST preconditions:
+	1. Can't create same file in location twice
+
+httpRequest
+	receive request
+	
+
+Phase II.
