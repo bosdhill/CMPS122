@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 
 #define BYTES 2048
-enum type{POST, GET};
+enum type{POST, GET, NONE};
 
 // when sending files back
 static void binary(int sock, char *fname) {
@@ -27,12 +27,37 @@ static void binary(int sock, char *fname) {
 }
 
 char *handleGet(char *pathname) {
-    return "SUCCESS\n";
+    return "BOOLIN\n";
 }
 
+// scrape line by line and check if that's a valid get request
+int checkValid(char *request) {
+    return 0;
+}
+
+
+// strtok by \n
+// check first of line of each with getBlah
+/*
+GET /hello/world HTTP/1.1
+Host: localhost:4200
+User-Agent: curl/7.47.0
+Accept:
+*/
 // get type of request
 enum type getType(char *request) {
-    return strstr(request, "GET") != NULL ? GET: POST;
+    char *req_type;
+    if ((req_type = strstr(request, "GET")) != NULL && req_type == request)
+        return GET;
+    if ((req_type = strstr(request, "POST")) != NULL && req_type == request)
+        return POST;
+    return NONE;
+}
+
+// check headers to see if valid http
+int checkHeader(char *request, char *header) {
+    char *req_header;
+    return 0;
 }
 
 // \n\n == content
