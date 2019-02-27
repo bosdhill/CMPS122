@@ -15,6 +15,7 @@
 #define BYTES 2048
 enum type{POST, GET};
 
+// when sending files back
 static void binary(int sock, char *fname) {
     int fd;
     int bytes;
@@ -25,9 +26,8 @@ static void binary(int sock, char *fname) {
    }
 }
 
-
 char *handleGet(char *pathname) {
-    return "SUCCESS";
+    return "SUCCESS\n";
 }
 
 // get type of request
@@ -41,9 +41,7 @@ void httpRequest(int sock, char *request) {
     printf("sock: %d\n", sock);
 
     if (getType(request) == GET) {
-        send(sock, (void *)handleGet("test"), sizeof("SUCCESS"), 0);
+        send(sock, (void *)handleGet("test"), sizeof("SUCCESS\n"), 0);
     }
-
-
 }
 
