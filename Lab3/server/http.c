@@ -17,6 +17,7 @@
 #define INVALID 0
 enum type{POST, GET, NONE};
 char *filepath;
+char *content;
 
 // when sending files back
 static void binary(int sock, char *fname) {
@@ -27,6 +28,16 @@ static void binary(int sock, char *fname) {
         while ((bytes = read(fd, buffer, BYTES)) > 0)
             write(sock, buffer, bytes);
    }
+}
+
+// extract file path from request body
+char *getFilePath(char *request) {
+
+}
+
+// extract content from request body
+char *getContent(char *content) {
+
 }
 
 char *handleGet(char *pathname) {
@@ -45,9 +56,12 @@ Accept:
 enum type getType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
+        filepath = getFilePath(request);
         return GET;
     }
     if ((req_type = strstr(request, "POST")) != NULL && req_type == request) {
+        filepath = getFilePath(request);
+        content = getContent(request);
         return POST;
     }
     return NONE;
@@ -60,7 +74,6 @@ int checkHeader(char *request, char *header) {
         return VALID;
     return INVALID;
 }
-
 
 // \n\n == content
 void httpRequest(int sock, char *request) {
