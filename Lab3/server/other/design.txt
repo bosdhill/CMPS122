@@ -5,15 +5,18 @@ GET preconditions:
 POST preconditions:
 	1. Can't create same file in location twice
 
+enum	ERROR, GET
+
 httpRequest
 	receive request
-	parse first line of request to see if its POST or GET
-	store pathname of request
-	store content of request
-	if GET
+	call parse(first) -> TYPE, pathname or ERROR
+	if ERROR 
+		return 404
+	if TYPE == GET
 		call handleGET(pathname) -> status
-	if POST
-		call handlePOST(pathname, content) -> status
+	if TYPE == POST
+		call parse(GET) -> content, length
+		call handlePOST(pathname, content, length) -> status
 	return status
 	
 Phase II.
