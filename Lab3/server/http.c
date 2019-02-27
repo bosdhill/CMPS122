@@ -8,8 +8,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <string.h>
 
 #define BYTES 2048
+enum type{POST, GET};
 
 static void binary(int sock, char *fname) {
     int fd;
@@ -21,8 +23,15 @@ static void binary(int sock, char *fname) {
    }
 }
 
-void httpRequest(int sock, char *request) {
-	printf("request: %s\n", request);
+// get type of request
+enum type getType(char *request) {
+    return strstr(request, "GET") != NULL ? GET: POST;
+}
 
+// \n\n == content
+void httpRequest(int sock, char *request) {
+	printf("request: \n%s\n", request);
+    printf("sock: %d\n", sock);
+    printf("type of request: %s\n", getType(request) ? "GET" : "POST");
 }
 
