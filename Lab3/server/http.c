@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 
 #define BYTES 2048
+#define VALID 1
+#define INVALID 0
 enum type{POST, GET, NONE};
 
 // when sending files back
@@ -47,18 +49,23 @@ Accept:
 // get type of request
 enum type getType(char *request) {
     char *req_type;
-    if ((req_type = strstr(request, "GET")) != NULL && req_type == request)
+    if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
         return GET;
-    if ((req_type = strstr(request, "POST")) != NULL && req_type == request)
+    }
+    if ((req_type = strstr(request, "POST")) != NULL && req_type == request) {
         return POST;
+    }
     return NONE;
 }
 
-// check headers to see if valid http
+// check headers to see if valid http header
 int checkHeader(char *request, char *header) {
     char *req_header;
-    return 0;
+    if ((req_header = strstr(request, header)) != NULL && req_header == request)
+        return VALID;
+    return INVALID;
 }
+
 
 // \n\n == content
 void httpRequest(int sock, char *request) {
