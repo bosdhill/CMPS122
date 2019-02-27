@@ -7,6 +7,13 @@ POST preconditions:
 
 httpRequest
 	receive request
+	parse first line of request to see if its POST or GET
+	store pathname of request
+	store content of request
+	if GET
+		call handleGET(pathname) -> status
+	if POST
+		call handlePOST(pathname, content) -> status
+	return status
 	
-
 Phase II.
