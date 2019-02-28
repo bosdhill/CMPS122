@@ -19,7 +19,7 @@
 
 enum type{POST, GET, NONE};
 char homedir[SIZE];
-char *GET_ERROR = "HTTP/1.0 404 Not Found\n";
+char GET_ERROR[] = "HTTP/1.0 404 Not Found\n";
 
 // writes out file to sock
 static void binary(int sock, char *fname) {
