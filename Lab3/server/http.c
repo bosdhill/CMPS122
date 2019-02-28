@@ -69,9 +69,9 @@ void get_path_to_file(char *path, char file_path[]) {
 
 // need file name
 // need absolute path to file
-void sendFile(int sock, char *path) {
+void sendFile(int sock, char path[]) {
     printf("sendFile\n");
-    char absolute_file_path[SIZE] = {0};
+    char absolute_file_path[SIZE];
     strcat(absolute_file_path, homedir);
     strcat(absolute_file_path, path);
     printf("absolute_path = %s\n", absolute_file_path);
