@@ -50,7 +50,6 @@ void get_file_name_from(char *path, char file_name[]) {
         token = strtok(NULL, delim);
     } while (token != NULL);
     strncpy(file_name, prev, SIZE/4);
-    printf("prev = %s\n", prev);
 }
 
 void get_path_to_file(char *path, char file_path[]) {
@@ -66,7 +65,6 @@ void get_path_to_file(char *path, char file_path[]) {
             prev = token;
         }
     }
-    printf("pathToFile: %s\n", file_path);
 }
 
 // need file name
@@ -84,9 +82,9 @@ void sendFile(int sock, char *path) {
 }
 
 // extract file path from request body
-char *getPathFromHttp(char *request) {
+void getPathFromHttp(char *request, char path[]) {
     strtok(request, " ");
-    return strtok(NULL, " ");
+    strcpy(path, strtok(NULL, " "));
 }
 
 // strtok by \n
@@ -116,11 +114,10 @@ void setHomeDir() {
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
-    printf("sock: %d\n", sock);
-
     setHomeDir();
     if (getReqType(request) == GET) {
-        char *path = getPathFromHttp(request);
+        char path[SIZE/2];
+        getPathFromHttp(request, path);
         printf("path = %s\n", path);
         sendFile(sock, path);
     }
