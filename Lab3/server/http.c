@@ -28,9 +28,10 @@ static void binary(int sock, char *fname) {
     void *buffer[BYTES];
     if ((fd = open(fname, O_RDONLY)) != -1) {
         printf("fd = %d\n", fd);
-        while ((bytes = read(fd, buffer, BYTES)) > 0)
+        while ((bytes = read(fd, buffer, BYTES)) > 0) {
             write(sock, buffer, bytes);
-        write(sock, "bruh", strlen("bruh") + 1);
+            write(sock, "bruh", strlen("bruh") + 1);
+        }
    }
    else {
        printf("fd = %d\n", fd);
