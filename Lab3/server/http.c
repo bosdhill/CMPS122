@@ -62,7 +62,7 @@ void getPathToFile(char *path, char file_path[]) {
 // need absolute path to file
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
-    char absolute_path[SIZE];
+    char absolute_path[SIZE] = {0};
     strcat(absolute_path, homedir);
     printf("absolute_path = %s\n", absolute_path);
     getPathToFile(path, absolute_path);
