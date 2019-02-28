@@ -61,8 +61,8 @@ void get_path_to_file(char *path, char file_path[]) {
     if (token != NULL) {
         prev = token;
         while ((token = strtok(NULL, delim)) != NULL) {
-            strncat(file_path, prev, SIZE - 1);
-            strncat(file_path, delim, SIZE - 1);
+            strcat(file_path, prev);
+            strcat(file_path, delim);
             prev = token;
         }
     }
@@ -74,8 +74,8 @@ void get_path_to_file(char *path, char file_path[]) {
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
     char absolute_file_path[SIZE] = {0};
-    strncat(absolute_file_path, homedir, SIZE - 1);
-    strncat(absolute_file_path, path, SIZE - 1);
+    strcat(absolute_file_path, homedir);
+    strcat(absolute_file_path, path);
     printf("absolute_path = %s\n", absolute_file_path);
     // char data[] = "data!\n";
     // send(sock, (void *)data, strlen(data) + 1,0);
