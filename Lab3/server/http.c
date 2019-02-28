@@ -112,7 +112,7 @@ void get_path_from_http(char *request, char path[]) {
 
 void get_content_from_http(char *request) {
     printf("get_content_from_http\n");
-    char *content_start = strstr(request, "\r\n");
+    char *content_start = strstr(request, "\r\n\r\n");
     printf("content = %s\n", content_start);
 }
 
@@ -152,6 +152,7 @@ void httpRequest(int sock, char *request) {
     }
     else if (getReqType(request) == POST) {
         char path[SIZE/2] = {0};
+        char content[BYTES] = {0};
         get_path_from_http(request, path);
         get_content_from_http(request);
         printf("\tpath = %s\n", path);
