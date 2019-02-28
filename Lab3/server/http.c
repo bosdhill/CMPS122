@@ -15,7 +15,9 @@
 #define BYTES 2048
 #define VALID 1
 #define INVALID 0
+#define SIZE 256
 enum type{POST, GET, NONE};
+char homedir[SIZE];
 
 // when sending files back
 static void binary(int sock, char *fname) {
@@ -28,12 +30,52 @@ static void binary(int sock, char *fname) {
    }
 }
 
+char *findFile(char *path) {
+    char *token = strtok(path, "/");
+    char *prev;
+    do {
+        prev = token;
+        token = strtok(NULL, "/");
+    } while (token != NULL);
+    printf("prev = %s\n", prev);
+    return prev;
+}
+
+char *concat(char *dest, char *src) {
+    char *ret_str = calloc(1, strlen(dest) + strlen(src) + 1);
+    strcat(ret_str, dest);
+    strcat(ret_str, src);
+    return ret_str;
+}
+
+char *getPathToFile(char *path) {
+    char *delim = "/";
+    char *pathToFile = calloc(1, strlen(path));
+    char *token = strtok(path, delim);
+    strcat(pathToFile, token);
+    strcat(pathToFile, delim);
+    do {
+        token = strtok(NULL, delim);
+        strcat(pathToFile, token);
+        strcat(pathToFile, delim);
+        printf("%s\n", pathToFile);
+    } while (token != NULL);
+    printf("pathToFile: %s\n", pathToFile);
+    return concat(homedir, pathToFile);
+}
+
+void sendFile(int sock, char *path) {
+    printf("sendFile\n");
+    chdir(getPathToFile(path));
+    binary(sock, findFile(path));
+    chdir(homedir);
+}
+
 // extract file path from request body
-char *getFilePath(char *request, char *req_type) {
+char *getPathFromHttp(char *request) {
     strtok(request, " ");
     return strtok(NULL, " ");
 }
-
 // extract content from request body
 void getContent(char *content) {
 
@@ -63,12 +105,8 @@ enum type getReqType(char *request) {
     return NONE;
 }
 
-// check headers to see if valid http header
-int checkHeader(char *request, char *header) {
-    char *req_header;
-    if ((req_header = strstr(request, header)) != NULL && req_header == request)
-        return VALID;
-    return INVALID;
+void setHomeDir() {
+    getcwd(homedir, SIZE);
 }
 
 // \r\n is a newline in curl
@@ -76,11 +114,11 @@ void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
 
+    setHomeDir();
     if (getReqType(request) == GET) {
-        char filepath[256];
-        strcpy(filepath, getFilePath(request, "GET"));
-        printf("filepath: %s\n", filepath);
-        send(sock, (void *)handleGet("test"), sizeof("SUCCESS\n"), 0);
+        char *path = getPathFromHttp(request);
+        printf("path = %s\n", path);
+        sendFile(sock, path);
     }
 }
 
