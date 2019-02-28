@@ -41,7 +41,7 @@ char *findFile(char *path) {
     return prev;
 }
 
-char *concat(char *dest, char *src) {
+char *concat(char dest[], char src[]) {
     char *ret_str = calloc(1, strlen(dest) + strlen(src) + 1);
     strcat(ret_str, dest);
     strcat(ret_str, src);
