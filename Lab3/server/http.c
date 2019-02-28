@@ -24,9 +24,9 @@ char BADREQ[] = "HTTP/1.1 400 Bad Request\n";
 
 
 void http_response(int sock) {
-    char data[] = "\n";
-    send(sock, (void *)data, strlen(data) + 1,0);
-    char SUCCESS[] = "HTTP/1.1 200 OK\n";
+    // char data[] = "\n";
+    // send(sock, (void *)data, strlen(data) + 1,0);
+    char SUCCESS[] = "\nHTTP/1.1 200 OK\n";
     send(sock, (void *)SUCCESS, strlen(SUCCESS) + 1,0);
 }
 
