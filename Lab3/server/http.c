@@ -72,9 +72,10 @@ void get_path_to_file(char *path, char file_path[]) {
 void sendFile(int sock, char path[]) {
     printf("sendFile\n");
     char absolute_file_path[SIZE] = {0};
-    strcat(absolute_file_path, homedir);
-    strcat(absolute_file_path, path);
+    strncat(absolute_file_path, homedir, strlen(homedir) + 1);
+    strncat(absolute_file_path, path, strlen(path) + 1);
     printf("absolute_path = %s\n", absolute_file_path);
+    printf("strlen of absolute_path = %d\n", strlen(absolute_file_path));
     // char data[] = "data!\n";
     // send(sock, (void *)data, strlen(data) + 1,0);
     http_response(sock);
@@ -119,6 +120,7 @@ void httpRequest(int sock, char *request) {
         char path[SIZE/2] = {0};
         getPathFromHttp(request, path);
         printf("path = %s\n", path);
+        printf("strlen of path = %d\n", strlen(path));
         sendFile(sock, path);
     }
 }
