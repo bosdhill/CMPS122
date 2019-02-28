@@ -29,7 +29,7 @@ static void binary(int sock, char *fname) {
     if ((fd = open(fname, O_RDONLY)) != -1) {
         printf("fd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0)
-            write(sock, buffer, bytes);
+            write(sock, "HTTP/1.0 404 Not Found\n", sizeof("HTTP/1.0 404 Not Found\n"));
    }
    else {
        printf("fd = %d\n", fd);
