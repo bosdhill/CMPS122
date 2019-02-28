@@ -54,12 +54,12 @@ char *getPathToFile(char *path) {
     char *token = strtok(path, delim);
     strcat(pathToFile, token);
     strcat(pathToFile, delim);
-    do {
+    while (token != NULL) {
         token = strtok(NULL, delim);
         strcat(pathToFile, token);
         strcat(pathToFile, delim);
         printf("%s\n", pathToFile);
-    } while (token != NULL);
+    };
     printf("pathToFile: %s\n", pathToFile);
     printf("path= %s\n", concat(homedir, pathToFile));
     return concat(homedir, pathToFile);
