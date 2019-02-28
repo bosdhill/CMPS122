@@ -24,6 +24,8 @@ char BADREQ[] = "HTTP/1.1 400 Bad Request\n";
 
 
 void http_response(int sock) {
+    char data[] = "\n";
+    send(sock, (void *)data, strlen(data) + 1,0);
     char SUCCESS[] = "HTTP/1.1 200 OK\n";
     send(sock, (void *)SUCCESS, strlen(SUCCESS) + 1,0);
 }
@@ -76,8 +78,6 @@ void sendFile(int sock, char path[]) {
     strncat(absolute_file_path, path, strlen(path) + 1);
     printf("absolute_path = %s\n", absolute_file_path);
     printf("strlen of absolute_path = %d\n", strlen(absolute_file_path));
-    char data[] = "\n";
-    send(sock, (void *)data, strlen(data) + 1,0);
     http_response(sock);
     binary(sock, absolute_file_path);
 }
