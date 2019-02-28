@@ -77,8 +77,8 @@ void sendFile(int sock, char *path) {
     strncat(absolute_file_path, homedir, SIZE - 1);
     strncat(absolute_file_path, path, SIZE - 1);
     printf("absolute_path = %s\n", absolute_file_path);
-    // char data[] = "data!\n";
-    // send(sock, (void *)data, strlen(data) + 1,0);
+    char data[] = "data!\n";
+    send(sock, (void *)data, strlen(data) + 1,0);
     http_response(sock);
     binary(sock, absolute_file_path);
 }
