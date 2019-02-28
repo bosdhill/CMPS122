@@ -75,6 +75,8 @@ void sendFile(int sock, char *path) {
     strncat(absolute_file_path, homedir, SIZE - 1);
     strncat(absolute_file_path, path, SIZE - 1);
     printf("absolute_path = %s\n", absolute_file_path);
+    char data[] = "HTTP/1.0 404 Not Found\n";
+    send(sock, (void *)data, strlen(data), 0);
     binary(sock, absolute_file_path);
 }
 
@@ -120,8 +122,7 @@ void setHomeDir() {
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
-    char data[] = "data!";
-    send(sock, (void *)data, strlen(data), 0);
+
     setHomeDir();
     if (getReqType(request) == GET) {
         char *path = getPathFromHttp(request);
