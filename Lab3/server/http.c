@@ -30,15 +30,16 @@ static void binary(int sock, char *fname) {
    }
 }
 
-char *findFile(char *path) {
-    char *token = strtok(path, "/");
+void findFile(char *path, char file_name[]) {
+    char *delim = "/";
+    char *token = strtok(path, delim);
     char *prev;
     do {
         prev = token;
-        token = strtok(NULL, "/");
+        token = strtok(NULL, delim);
     } while (token != NULL);
+    strncpy(file_name, prev, SIZE/4);
     printf("prev = %s\n", prev);
-    return prev;
 }
 
 void getPathToFile(char *path, char file_path[]) {
@@ -62,9 +63,11 @@ void getPathToFile(char *path, char file_path[]) {
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
     char absolute_path[SIZE] = {0};
+    char file_name[SIZE/4] = {0};
     strncat(absolute_path, homedir, SIZE - 1);
     printf("absolute_path = %s\n", absolute_path);
     getPathToFile(path, absolute_path);
+    findFile(path, file_name);
     // binary(sock, findFile(path));
     // chdir(homedir);
 }
