@@ -19,7 +19,7 @@
 enum type{POST, GET, NONE};
 char homedir[SIZE];
 
-// when sending files back
+// writes out file to sock
 static void binary(int sock, char *fname) {
     int fd;
     int bytes;
@@ -30,7 +30,7 @@ static void binary(int sock, char *fname) {
    }
 }
 
-void findFile(char *path, char file_name[]) {
+void get_file_name_from(char *path, char file_name[]) {
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev;
@@ -42,7 +42,7 @@ void findFile(char *path, char file_name[]) {
     printf("prev = %s\n", prev);
 }
 
-void getPathToFile(char *path, char file_path[]) {
+void get_path_to_file(char *path, char file_path[]) {
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -66,10 +66,11 @@ void sendFile(int sock, char *path) {
     char file_name[SIZE/4] = {0};
     strncat(absolute_path, homedir, SIZE - 1);
     printf("absolute_path = %s\n", absolute_path);
-    getPathToFile(path, absolute_path);
-    findFile(path, file_name);
-    // binary(sock, findFile(path));
-    // chdir(homedir);
+    get_path_to_file(path, absolute_path);
+    get_file_name_from(path, file_name);
+    chdir(absolute_path);
+    binary(sock, file_name);
+    chdir(homedir);
 }
 
 // extract file path from request body
