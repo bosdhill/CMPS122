@@ -114,6 +114,9 @@ void get_content_from_http(char *request) {
     char delim[] = "\r\n\r\n";
     char *content_start = strstr(request, delim);
     printf("\tcontent = %s\n", content_start);
+    for (int i = 0; content_start[i] != '\0'; i++) {
+        printf("%c", content_start[i]);
+    }
 }
 
 // strtok by \n
