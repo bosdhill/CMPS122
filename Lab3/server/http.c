@@ -120,7 +120,8 @@ void setHomeDir() {
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
-
+    char data[] = "data!";
+    send(sock, (void *)data, strlen(data), 0);
     setHomeDir();
     if (getReqType(request) == GET) {
         char *path = getPathFromHttp(request);
