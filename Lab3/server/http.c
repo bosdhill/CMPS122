@@ -110,9 +110,14 @@ void get_path_from_http(char *request, char path[]) {
 }
 
 void get_content_from_http(char *request) {
-    // char delim[] = "\r\n\r\n";
+    printf("get_content_from_http\n");
     char *content_start = strstr(request, "\r\n\r\n");
     printf("\tcontent = %s\n", content_start);
+    printf("\tcontent = %s\n", content_start + 1);
+    printf("\tcontent = %s\n", content_start + 2);
+    printf("\tcontent = %s\n", content_start + 3);
+    printf("\tcontent = %s\n", content_start + 4);
+    printf("\tcontent = %s\n", content_start + 5);
 }
 
 // strtok by \n
