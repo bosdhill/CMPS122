@@ -111,7 +111,7 @@ void get_path_from_http(char *request, char path[]) {
 
 void get_content_from_http(char *request) {
     // char delim[] = "\r\n\r\n";
-    char *content_start = strstr(request, "\r\n\r\n") + strlen("\r\n\r\n") + 1;
+    char *content_start = strstr(request, "\r\n\r\n") + 4;
     printf("\tcontent = %s\n", content_start);
 }
 
@@ -141,7 +141,7 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	printf("request: \n%s\n", request);
+	// printf("request: \n%s\n", request);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
@@ -153,8 +153,8 @@ void httpRequest(int sock, char *request) {
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
         get_path_from_http(request, path);
-        get_content_from_http(request);
         printf("\tpath = %s\n", path);
+        get_content_from_http(request);
         write_file_to(sock, path);
     }
     else 
