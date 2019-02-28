@@ -18,7 +18,7 @@
 #define SIZE 512
 
 enum req_type{POST, GET, NONE};
-char homedir[SIZE];
+char homedir[SIZE/2];
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\n"; 
 
