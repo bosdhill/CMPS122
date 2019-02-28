@@ -62,15 +62,11 @@ void get_path_to_file(char *path, char file_path[]) {
 // need absolute path to file
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
-    char absolute_path[SIZE] = {0};
-    char file_name[SIZE/4] = {0};
-    strncat(absolute_path, homedir, SIZE - 1);
-    printf("absolute_path = %s\n", absolute_path);
-    get_path_to_file(path, absolute_path);
-    get_file_name_from(path, file_name);
-    chdir(absolute_path);
-    binary(sock, file_name);
-    chdir(homedir);
+    char absolute_file_path[SIZE] = {0};
+    strncat(absolute_file_path, homedir, SIZE - 1);
+    strncat(absolute_file_path, path, SIZE - 1);
+    printf("absolute_path = %s\n", absolute_file_path);
+    binary(sock, absolute_file_path);
 }
 
 // extract file path from request body
