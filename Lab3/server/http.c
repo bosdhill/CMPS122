@@ -19,12 +19,12 @@
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
+char SUCCESS[] = "\nHTTP/1.1 200 OK\n";
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\n"; 
 
 
 void http_response(int sock) {
-    char SUCCESS[] = "\nHTTP/1.1 200 OK\n";
     send(sock, (void *)SUCCESS, strlen(SUCCESS) + 1,0);
 }
 
