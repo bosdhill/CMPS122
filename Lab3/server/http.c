@@ -15,7 +15,7 @@
 #define BYTES 2048
 #define VALID 1
 #define INVALID 0
-#define SIZE 256
+#define SIZE 512
 enum type{POST, GET, NONE};
 char homedir[SIZE];
 
@@ -41,35 +41,32 @@ char *findFile(char *path) {
     return prev;
 }
 
-char *concat(char dest[], char src[]) {
-    char *ret_str = calloc(1, strlen(dest) + strlen(src) + 1);
-    strcat(ret_str, dest);
-    strcat(ret_str, src);
-    return ret_str;
-}
-
-char *getPathToFile(char *path) {
+void getPathToFile(char *path, char file_path[]) {
     char *delim = "/";
-    char *pathToFile = calloc(1, strlen(path));
     char *token = strtok(path, delim);
-    strcat(pathToFile, token);
-    strcat(pathToFile, delim);
-    while (token != NULL) {
-        token = strtok(NULL, delim);
-        strcat(pathToFile, token);
-        strcat(pathToFile, delim);
-        printf("%s\n", pathToFile);
-    };
-    printf("pathToFile: %s\n", pathToFile);
-    printf("path= %s\n", concat(homedir, pathToFile));
-    return concat(homedir, pathToFile);
+    char *prev = NULL;
+    if (token == NULL)
+        return delim;
+    prev = token;
+    while ((token = strtok(NULL, delim)) != NULL) {
+        strcat(file_path, prev);
+        strcat(file_path, delim);
+        prev = token;
+    }
+    printf("pathToFile: %s\n", file_path);
 }
 
+// need file name
+// need absolute path to file
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
-    chdir(getPathToFile(path));
-    binary(sock, findFile(path));
-    chdir(homedir);
+    char absolute_path[SIZE];
+    char file_path[SIZE/2];
+    strncat(absolute_path, homedir, SIZE);
+    printf("absolute_path = %s\n", absolute_path);
+    getPathToFile(path, absolute_path);
+    // binary(sock, findFile(path));
+    // chdir(homedir);
 }
 
 // extract file path from request body
