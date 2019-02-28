@@ -120,12 +120,12 @@ void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
     char data[] = "HTTP/1.1 200\n";
-
+    send(sock, (void *)data, strlen(data) + 1, 0); 
+    
     setHomeDir();
     if (getReqType(request) == GET) {
         char *path = getPathFromHttp(request);
         printf("path = %s\n", path);
-        send(sock, (void *)data, strlen(data) + 1, 0); 
         sendFile(sock, path);
     }
 }
