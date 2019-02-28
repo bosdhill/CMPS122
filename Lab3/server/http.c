@@ -111,7 +111,7 @@ void get_path_from_http(char *request, char path[]) {
 
 void get_content_from_http(char *request) {
     printf("get_content_from_http\n");
-    char delim[4] = "\r\n\r\n";
+    char delim[] = "\r\n\r\n";
     char *content_start = strstr(request, delim);
     printf("\tcontent = %s\n", content_start);
 }
