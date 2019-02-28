@@ -150,7 +150,7 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	printf("request:%s", request);
+	// printf("request:%s", request);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
@@ -165,7 +165,7 @@ void httpRequest(int sock, char *request) {
         printf("\tpath = %s\n", path);
         get_after(request, "\r\n\r\n", content);
         printf("\tcontent = %s\n", content);
-        // get_content_from_http(request);
+        get_content_from_http(request);
         write_file_to(sock, path);
     }
     else 
