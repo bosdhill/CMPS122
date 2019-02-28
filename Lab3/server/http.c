@@ -19,9 +19,9 @@
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
-char SUCCESS[] = "\nHTTP/1.1 200 OK\n";
-char NOTFOUND[] = "\nHTTP/1.1 404 Not Found\n";
-char BADREQ[] = "\nHTTP/1.1 400 Bad Request\n"; 
+char SUCCESS[] = "\nHTTP/1.1 200 OK\r\n";
+char NOTFOUND[] = "\nHTTP/1.1 404 Not Found\r\n";
+char BADREQ[] = "\nHTTP/1.1 400 Bad Request\r\n"; 
 
 
 void http_response(int sock, char status[]) {
@@ -101,7 +101,6 @@ void write_file_to(int sock, char path[]) {
     get_path_to_file(path, path_to_file);
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
     chdir(absolute_file_path);
-
 }
 
 // extract file path from request body
