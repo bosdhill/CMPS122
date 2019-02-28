@@ -61,6 +61,7 @@ char *getPathToFile(char *path) {
         printf("%s\n", pathToFile);
     } while (token != NULL);
     printf("pathToFile: %s\n", pathToFile);
+    printf("path= %s\n", concat(homedir, pathToFile));
     return concat(homedir, pathToFile);
 }
 
