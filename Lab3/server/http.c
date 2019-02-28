@@ -153,6 +153,7 @@ void httpRequest(int sock, char *request) {
     else if (getReqType(request) == POST) {
         char path[SIZE/2] = {0};
         get_path_from_http(request, path);
+        get_content_from_http(request);
         printf("\tpath = %s\n", path);
         write_file_to(sock, path);
     }
