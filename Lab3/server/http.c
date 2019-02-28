@@ -18,7 +18,7 @@
 #define SIZE 512
 
 enum req_type{POST, GET, NONE};
-char homedir[SIZE/2];
+char homedir[SIZE/2] = {0};
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\n"; 
 
@@ -71,7 +71,7 @@ void get_path_to_file(char *path, char file_path[]) {
 // need absolute path to file
 void sendFile(int sock, char path[]) {
     printf("sendFile\n");
-    char absolute_file_path[SIZE];
+    char absolute_file_path[SIZE] = {0};
     strcat(absolute_file_path, homedir);
     strcat(absolute_file_path, path);
     printf("absolute_path = %s\n", absolute_file_path);
@@ -116,7 +116,7 @@ void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     setHomeDir();
     if (getReqType(request) == GET) {
-        char path[SIZE/2];
+        char path[SIZE/2] = {0};
         getPathFromHttp(request, path);
         printf("path = %s\n", path);
         sendFile(sock, path);
