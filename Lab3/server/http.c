@@ -33,7 +33,7 @@ static void binary(int sock, char *fname) {
    }
    else {
        printf("fd = %d\n", fd);
-       send(sock, (void *)GET_ERROR, sizeof(GET_ERROR), 0);
+       write(sock, GET_ERROR, sizeof(GET_ERROR));
    }
 }
 
