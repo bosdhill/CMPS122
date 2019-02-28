@@ -105,8 +105,9 @@ void write_file_to(int sock, char path[]) {
 
 // extract file path from request body
 void get_path_from_http(char *request, char path[]) {
+    printf("get_path_from_http\n");
     strtok(request, " ");
-    strcpy(path, strtok(NULL, " "));
+    strncpy(path, strtok(NULL, " "), strlen(path) + 1);
 }
 
 void get_content_from_http(char *request) {
@@ -144,7 +145,7 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	// printf("request: \n%s\n", request);
+	printf("request:%s", request);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
