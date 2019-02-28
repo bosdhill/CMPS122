@@ -110,6 +110,11 @@ void get_path_from_http(char *request, char path[]) {
     strcpy(path, strtok(NULL, " "));
 }
 
+void get_after(char *request, char *delim, char *after){
+    strtok(request, delim);
+    strcpy(after, strtok(NULL, delim));
+}
+
 void get_content_from_http(char *request) {
     printf("get_content_from_http\n");
     char *content_start = strstr(request, "\r\n\r\n") + strlen("\r\n\r\n");
@@ -158,7 +163,9 @@ void httpRequest(int sock, char *request) {
         char content[BYTES] = {0};
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
-        get_content_from_http(request);
+        get_after(request, "\r\n\r\n", content);
+        printf("\tcontent = %s\n", content);
+        // get_content_from_http(request);
         write_file_to(sock, path);
     }
     else 
