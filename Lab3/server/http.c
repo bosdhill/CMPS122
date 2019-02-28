@@ -29,12 +29,14 @@ void http_response(int sock) {
 }
 
 // writes out file to sock
+// if zero bytes, then send NOTFOUND
 static void binary(int sock, char *fname) {
+    printf("binary(%d, %s)\n", sock, fname);
     int fd;
     int bytes;
     void *buffer[BYTES];
     if ((fd = open(fname, O_RDONLY)) != -1) {
-        printf("fd = %d\n", fd);
+        printf("\tfd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0) {
             write(sock, buffer, bytes);
         }
@@ -42,9 +44,10 @@ static void binary(int sock, char *fname) {
 }
 
 void get_file_name_from(char *path, char file_name[]) {
+    printf("get_file_name_from(%s, %s)\n", path, file_name);
     char *delim = "/";
     char *token = strtok(path, delim);
-    char *prev;
+    char *prev = NULL;
     do {
         prev = token;
         token = strtok(NULL, delim);
@@ -53,6 +56,7 @@ void get_file_name_from(char *path, char file_name[]) {
 }
 
 void get_path_to_file(char *path, char file_path[]) {
+    printf("get_path_to_file(%s, %s)\n", path, file_path);
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -69,18 +73,26 @@ void get_path_to_file(char *path, char file_path[]) {
 
 // need file name
 // need absolute path to file
-void sendFile(int sock, char path[]) {
-    printf("sendFile\n");
+void send_file_to(int sock, char path[]) {
+    printf("send_file_to(%d, %s)\n", sock, path);
     char absolute_file_path[SIZE] = {0};
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
-    printf("absolute_path = %s\n", absolute_file_path);
+    printf("\tabsolute_path = %s\n", absolute_file_path);
     http_response(sock);
     binary(sock, absolute_file_path);
 }
 
+void write_file_to(int sock, char path[]) {
+    printf("write_file_to(%d, %s)\n", sock, path);
+    char absolute_file_path[SIZE] = {0};
+    strncat(absolute_file_path, homedir, strlen(homedir) + 1);
+
+}
+
 // extract file path from request body
 void getPathFromHttp(char *request, char path[]) {
+    printf("getPathFromHttp(%s, %s)\n", request, path);
     strtok(request, " ");
     strcpy(path, strtok(NULL, " "));
 }
@@ -95,6 +107,7 @@ Accept:
 */
 // get type of request
 enum req_type getReqType(char *request) {
+    printf("getReqType(\n%s\n)\n", request);
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
         return GET;
@@ -116,7 +129,13 @@ void httpRequest(int sock, char *request) {
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
         getPathFromHttp(request, path);
-        printf("path = %s\n", path);
-        sendFile(sock, path);
+        printf("\tpath = %s\n", path);
+        send_file_to(sock, path);
+    }
+    if (getReqType(request) == POST) {
+        char path[SIZE/2] = {0};
+        getPathFromHttp(request, path);
+        printf("\tpath = %s\n", path);
+        write_file_to(sock, path);
     }
 }
