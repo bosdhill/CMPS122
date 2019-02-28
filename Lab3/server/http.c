@@ -63,7 +63,7 @@ void getPathToFile(char *path, char file_path[]) {
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
     char absolute_path[SIZE];
-    strncat(absolute_path, homedir, SIZE);
+    strcat(absolute_path, homedir);
     printf("absolute_path = %s\n", absolute_path);
     getPathToFile(path, absolute_path);
     // binary(sock, findFile(path));
