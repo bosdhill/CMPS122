@@ -111,8 +111,9 @@ void get_path_from_http(char *request, char path[]) {
 
 void get_content_from_http(char *request) {
     printf("get_content_from_http\n");
-    char *content_start = strstr(request, "\r\n\r\n");
-    printf("\tcontent = %s\n", content_start + 1);
+    char delim[4] = "\r\n\r\n";
+    char *content_start = strstr(request, delim);
+    printf("\tcontent = %s\n", content_start);
 }
 
 // strtok by \n
