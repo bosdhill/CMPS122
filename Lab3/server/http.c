@@ -19,7 +19,7 @@
 
 enum type{POST, GET, NONE};
 char homedir[SIZE];
-char GET_ERROR[] = "HTTP/1.0 404 Not Found\n";
+char *GET_ERROR = "HTTP/1.0 404 Not Found\n";
 
 // writes out file to sock
 static void binary(int sock, char *fname) {
@@ -27,10 +27,12 @@ static void binary(int sock, char *fname) {
     int bytes;
     void *buffer[BYTES];
     if ((fd = open(fname, O_RDONLY)) != -1) {
+        printf("fd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0)
             write(sock, buffer, bytes);
    }
    else {
+       printf("fd = %d\n", fd);
        send(sock, (void *)GET_ERROR, sizeof(GET_ERROR), 0);
    }
 }
