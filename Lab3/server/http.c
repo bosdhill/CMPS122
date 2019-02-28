@@ -17,9 +17,17 @@
 #define INVALID 0
 #define SIZE 512
 
-enum type{POST, GET, NONE};
+enum req_type{POST, GET, NONE};
 char homedir[SIZE];
-char GET_ERROR[] = "HTTP/1.0 404 Not Found\n";
+char SUCCESS[] = "HTTP/1.1 200 OK\n";
+char NOTFOUND[] = "HTTP/1.1 404 Not Found\n";
+char BADREQ[] = "HTTP/1.1 400 Bad Request\n"; 
+
+
+void http_response(int sock) {
+    char data[] = "data!\n";
+    send(sock, (void *)SUCCESS, strlen(data) + 1,0);
+}
 
 // writes out file to sock
 static void binary(int sock, char *fname) {
@@ -30,12 +38,7 @@ static void binary(int sock, char *fname) {
         printf("fd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0) {
             write(sock, buffer, bytes);
-            write(sock, "bruh", strlen("bruh") + 1);
         }
-   }
-   else {
-       printf("fd = %d\n", fd);
-       write(sock, GET_ERROR, strlen(GET_ERROR) + 1);
    }
 }
 
@@ -75,8 +78,9 @@ void sendFile(int sock, char *path) {
     strncat(absolute_file_path, homedir, SIZE - 1);
     strncat(absolute_file_path, path, SIZE - 1);
     printf("absolute_path = %s\n", absolute_file_path);
-    char data[] = "data!\n";
-    send(sock, (void *)data, strlen(data) + 1,0);
+    // char data[] = "data!\n";
+    // send(sock, (void *)data, strlen(data) + 1,0);
+    http_response(sock);
     binary(sock, absolute_file_path);
 }
 
@@ -84,14 +88,6 @@ void sendFile(int sock, char *path) {
 char *getPathFromHttp(char *request) {
     strtok(request, " ");
     return strtok(NULL, " ");
-}
-// extract content from request body
-void getContent(char *content) {
-
-}
-
-char *handleGet(char *pathname) {
-    return "BOOLIN\n";
 }
 
 // strtok by \n
@@ -103,7 +99,7 @@ User-Agent: curl/7.47.0
 Accept:
 */
 // get type of request
-enum type getReqType(char *request) {
+enum req_type getReqType(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
         return GET;
@@ -122,8 +118,7 @@ void setHomeDir() {
 void httpRequest(int sock, char *request) {
 	printf("request: \n%s\n", request);
     printf("sock: %d\n", sock);
-    char data[] = "data!\n";
-    send(sock, (void *)data, strlen(data) + 1,0);
+
     setHomeDir();
     if (getReqType(request) == GET) {
         char *path = getPathFromHttp(request);
