@@ -16,6 +16,7 @@
 #define VALID 1
 #define INVALID 0
 #define SIZE 512
+#define GET_ERROR "HTTP/1.0 404 Not Found\n"
 enum type{POST, GET, NONE};
 char homedir[SIZE];
 
@@ -27,6 +28,9 @@ static void binary(int sock, char *fname) {
     if ((fd = open(fname, O_RDONLY)) != -1) {
         while ((bytes = read(fd, buffer, BYTES)) > 0)
             write(sock, buffer, bytes);
+   }
+   else {
+       send(sock, (void *)GET_ERROR, sizeof(GET_ERROR), 0);
    }
 }
 
