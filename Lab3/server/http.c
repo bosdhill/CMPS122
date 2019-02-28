@@ -107,7 +107,7 @@ void write_file_to(int sock, char path[]) {
 void get_path_from_http(char *request, char path[]) {
     printf("get_path_from_http\n");
     strtok(request, " ");
-    strncpy(path, strtok(NULL, " "), strlen(path) + 1);
+    strcpy(path, strtok(NULL, " "));
 }
 
 void get_content_from_http(char *request) {
