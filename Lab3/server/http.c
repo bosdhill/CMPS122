@@ -46,8 +46,7 @@ void getPathToFile(char *path, char file_path[]) {
     char *token = strtok(path, delim);
     char *prev = NULL;
     strcat(file_path, delim);
-    if (token != NULL)
-    {
+    if (token != NULL) {
         prev = token;
         while ((token = strtok(NULL, delim)) != NULL) {
             strncat(file_path, prev, SIZE - 1);
