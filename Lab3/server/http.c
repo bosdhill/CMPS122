@@ -45,13 +45,13 @@ void getPathToFile(char *path, char file_path[]) {
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
-    if (token == NULL)
-        strcat(file_path, delim);
-    else {
+    strcat(file_path, delim);
+    if (token != NULL)
+    {
         prev = token;
         while ((token = strtok(NULL, delim)) != NULL) {
-            strcat(file_path, prev);
-            strcat(file_path, delim);
+            strncat(file_path, prev, SIZE - 1);
+            strncat(file_path, delim, SIZE - 1);
             prev = token;
         }
     }
@@ -63,7 +63,7 @@ void getPathToFile(char *path, char file_path[]) {
 void sendFile(int sock, char *path) {
     printf("sendFile\n");
     char absolute_path[SIZE] = {0};
-    strcat(absolute_path, homedir);
+    strncat(absolute_path, homedir, SIZE - 1);
     printf("absolute_path = %s\n", absolute_path);
     getPathToFile(path, absolute_path);
     // binary(sock, findFile(path));
