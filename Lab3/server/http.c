@@ -116,32 +116,13 @@ void get_after(char *request, char *delim, char after[]){
     strcpy(after, strtok(NULL, delim));
 }
 
-void get_content_from_http(char *request) {
+void get_content_from_http(char *request, char content[]) {
     printf("get_content_from_http\n");
-    // char *content_start = strstr(request, "\r\n\r\n") + strlen("\r\n\r\n");
-    // printf("\tcontent = %s\n", content_start);
-    // find the end of the request, which is terminated
-    // by two linebreaks
     char* end = strstr(request, "\r\n\r\n");
     if (end == NULL) {
         printf("cant find carriage newline\n");
     }
-    printf("content: %s\n", end + strlen("\r\n\r\n"));
-    char* buffer = 0;
-    if(end) {
-        // allocate memory to hold the entire request
-        buffer = malloc((end - request) + 1);
-        if(buffer) {
-            // copy request to buffer
-            memcpy(buffer, request, end - request);
-            // null terminate the buffer
-            buffer[end - request] = 0;
-            // do something with the buffer
-            // printf("buffer = %s\n", buffer);
-            // don't forget to release the allocated memory
-            free(buffer);
-        }
-    }
+    printf("\tcontent = %s\n", end + strlen("\r\n\r\n"));
 }
 
 // get type of request
@@ -162,9 +143,7 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	printf("request:\n%s\n", request);
-    // printf("hexdump:\n");
-    // int i; for (i = 0; i < strlen(request) + 1; i++) printf("%02X", request[i]);
+	// printf("request:\n%s\n", request);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
@@ -175,11 +154,9 @@ void httpRequest(int sock, char *request) {
     else if (getReqType(request) == POST) {
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
-        get_content_from_http(request);
+        get_content_from_http(request, content);
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
-        // printf("\tcontent = %s\n", content);
-        // write_file_to(sock, path);
     }
     else
         http_response(sock, BADREQ);
