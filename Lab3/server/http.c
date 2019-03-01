@@ -164,12 +164,6 @@ void get_path_from_http(char *request, char path[]) {
     strncpy(request, orig_request, BYTES);
 }
 
-void get_after(char *request, char *delim, char after[]){
-    printf("get_after\n");
-    strtok(request, delim);
-    strcpy(after, strtok(NULL, delim));
-}
-
 void get_content_from_http(char *request, char content[]) {
     printf("get_content_from_http\n");
     char orig_request[BYTES];
