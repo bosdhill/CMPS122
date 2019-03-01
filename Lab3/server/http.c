@@ -71,7 +71,6 @@ int create_file_named(char *fname, char content[], int sock) {
         write(fd, content, BYTES);
         if (EXPECT == 1) {
             printf("\tHTTP/1.1 100-continue\r\n");
-            EXPECT = 0;
             int recv_bytes;
             char response[BYTES] = {0};
             send_http_response(sock, CONTINUE);
@@ -81,6 +80,8 @@ int create_file_named(char *fname, char content[], int sock) {
             content_length -= recv_bytes;
             printf("bytes left: %d\n", content_length);
         }
+        EXPECT = 0;
+        content_length = 0;
         printf("gets here?\n");
         return 1;
     }
