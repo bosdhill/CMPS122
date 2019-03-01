@@ -65,6 +65,7 @@ int create_file_named(char *fname, char content[], int sock) {
     if ((fd = open(fname, flags, 0777)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT) {
+            EXPECT = 0;
             int recv_bytes;
             do {
                 char response[BYTES] = {0};
@@ -77,7 +78,6 @@ int create_file_named(char *fname, char content[], int sock) {
                 printf("bytes left: %d\n", content_length);
             } while (content_length > 0);
         }
-        EXPECT = 0;
         return 1;
     }
     return -1;
