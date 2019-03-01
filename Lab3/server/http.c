@@ -159,7 +159,7 @@ void get_content_from_http(char *request, char content[]) {
 }
 
 // get type of request
-enum req_type getReqType(char *request) {
+enum req_type get_req_type(char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
         return GET;
@@ -174,17 +174,15 @@ void setHomeDir() {
     getcwd(homedir, SIZE);
 }
 
-// \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	// printf("request:\n%s\n", request);
     setHomeDir();
-    if (getReqType(request) == GET) {
+    if (get_req_type(request) == GET) {
         char path[SIZE/2] = {0};
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
         send_file_to(sock, path);
     }
-    else if (getReqType(request) == POST) {
+    else if (get_req_type(request) == POST) {
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
         get_content_from_http(request, content);
