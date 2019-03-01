@@ -120,6 +120,7 @@ void get_path_to_file(char path[], char file_path[]) {
     strncpy(path, orig_path, SIZE/2);
 }
 
+
 // need file name
 // need absolute path to file
 void send_file_to(int sock, char path[]) {
@@ -166,23 +167,47 @@ void create_directory_path_from(char path[]) {
     printf("\tpath is now %s\n", path);
 }
 
+void get_path_to_file_and_file(char path[], char file[], char file_path[]) {
+    printf("get_path_to_file_and_file\n");
+    char orig_path[SIZE/2] = {0};
+    char *delim = "/";
+    char *token = strtok(path, delim);
+    char *prev = NULL;
+    strcat(orig_path, delim);
+    if (token != NULL) {
+        prev = token;
+        while ((token = strtok(NULL, delim)) != NULL) {
+            strcat(orig_path, prev);
+            strcat(orig_path, delim);
+            prev = token;
+        }
+    }
+    strncpy(file, prev, strlen(prev) + 1);
+    strncpy(file_path, orig_path, strlen(orig_path) + 1);
+    printf("file = %s\n", file);
+    printf("path to it is = %s\n", orig_path);
+}
+
 void write_file_to(int sock, char path[], char content[]) {
     printf("write_file_to\n");
     printf("path = %s\n", path);
     char absolute_file_path[SIZE] = {0};
     char path_to_file[SIZE/2] = {0};
     char fname[SIZE/2] = {0};
-    get_file_name_from(path, fname);
-    printf("\tfile = %s\n", fname);
+    // get_file_name_from(path, fname);
+    // printf("\tfile = %s\n", fname);
     printf("\tpath is now %s\n", path);
-    get_path_to_file(path, path_to_file);
-    printf("\tfile path = %s\n", path_to_file);
-    printf("\tpath is now %s\n", path);
+    // get_path_to_file(path, path_to_file);
+    get_path_to_file_and_file(path, fname, path_to_file);
+    printf("\tfile name = %s\n", fname);
+    printf("\tpath to file = %s\n", path_to_file);
+    printf("\tpath = %s\n", path);
+    exit(1);
+    create_directory_path_from(path_to_file);
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
-    strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
-    printf("\tabsolute_path = %s\n", absolute_file_path);
-    if (chdir(absolute_file_path) == -1)
-        create_directory_path_from(path_to_file);
+    strncat(absolute_file_path, path_to_file, strlen(path_to_file) + 1);
+    printf("absolute = %s\n", absolute_file_path);
+    chdir(absolute_file_path);
     if(create_file_named(fname, content, sock) == -1)
         send_http_response(sock, BADREQ);
     else
