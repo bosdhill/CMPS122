@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #define BYTES 2048
 #define VALID 1
@@ -24,6 +25,14 @@ char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 
 
+// https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
+int is_regular_file(const char *path)
+{
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+
 void send_http_response(int sock, char status[]) {
     send(sock, (void *)status, strlen(status) + 1,0);
 }
@@ -35,7 +44,7 @@ static int binary(int sock, char *fname) {
     int fd;
     int bytes;
     void *buffer[BYTES];
-    char *end = "\r\n";
+    // char *end = "\r\n";
     if ((fd = open(fname, O_RDONLY)) != -1) {
         printf("\tfd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0) {
@@ -43,7 +52,7 @@ static int binary(int sock, char *fname) {
         }
    }
    printf("buffer = %s\n", (char *)buffer);
-   write(sock, (void *)end, strlen(end) + 1);
+//    write(sock, (void *)end, strlen(end) + 1);
    return strlen((char *)buffer) == 0? -1: 1;
 }
 
@@ -108,8 +117,12 @@ void send_file_to(int sock, char path[]) {
         send_http_response(sock, NOTFOUND);
     }
     else {
-        send_http_response(sock, SUCCESS);
-        binary(sock, absolute_file_path);
+        if (is_regular_file(absolute_file_path)) {
+            send_http_response(sock, SUCCESS);
+            binary(sock, absolute_file_path);
+        }
+        else
+            send_http_response(sock, NOTFOUND);
     }
     chdir(homedir);
 }
