@@ -205,8 +205,9 @@ void set_content_length(char *request) {
     strncpy(orig_request, request, BYTES);
     char *length = strstr(request, "Content-Length: ") + strlen("Content-Length: ");
     if (length != NULL) {
-        printf("\tcontent-length: %s\n", length);
-        // content_length = strtoumax(length, NULL, 10);
+        char *end = length + strlen(length);
+        content_length = strtol(length, &end, 10);
+        printf("\tcontent-length: %d\n", content_length);
         exit(1);
     }
     strncpy(request, orig_request, BYTES);
