@@ -26,6 +26,7 @@ char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 char CONTINUE[] = "HTTP/1.1 100-continue\r\n";
 unsigned char EXPECT = 0;
 int content_length = 0;
+mode_t umask_0 = 0777;
 
 // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int is_regular_file(const char *path)
@@ -62,7 +63,7 @@ int create_file_named(char *fname, char content[], int sock) {
     printf("create_file_named\n");
     int fd;
     int flags = (EXPECT == 1? O_RDWR | O_CREAT : O_RDWR | O_CREAT | O_APPEND);
-    if ((fd = open(fname, flags, 0777)) != -1) {
+    if ((fd = open(fname, flags, umask_0)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT) {
             EXPECT = 0;
@@ -145,6 +146,29 @@ void send_file_to(int sock, char path[]) {
     chdir(homedir);
 }
 
+// pre-cond: at least one directory since root exists
+void create_directory_path_from(char path[]) {
+    printf("create_directory_path_from\n");
+    char orig_path[SIZE/2];
+    char dir_path[SIZE] = {0};
+    strncpy(orig_path, path, SIZE/2);
+    char *delim = "/";
+    char *token = strtok(path, delim);
+    strncat(dir_path, token, SIZE);
+    strncat(dir_path, delim, SIZE);
+    chdir(homedir);
+    do {
+        mkdir(dir_path, umask_0);
+        printf("\tpwd: %s\n", dir_path);
+        token = strtok(NULL, delim);
+        strncat(dir_path, token, SIZE);
+        strncat(dir_path, delim, SIZE);
+    } while(token != NULL);
+    strncpy(path, dir_path, SIZE);
+    printf("\tpath is now %s\n", path);
+    exit(1);
+}
+
 void write_file_to(int sock, char path[], char content[]) {
     printf("write_file_to\n");
     printf("path = %s\n", path);
@@ -160,7 +184,9 @@ void write_file_to(int sock, char path[], char content[]) {
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
-    if (chdir(absolute_file_path) == -1 || create_file_named(fname, content, sock) == -1)
+    if (chdir(absolute_file_path) == -1)
+        create_directory_path_from(path_to_file);
+    if(create_file_named(fname, content, sock) == -1)
         send_http_response(sock, BADREQ);
     else
         send_http_response(sock, SUCCESS);
