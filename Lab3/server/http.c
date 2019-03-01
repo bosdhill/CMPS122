@@ -77,6 +77,7 @@ int create_file_named(char *fname, char content[], int sock) {
                 printf("bytes left: %d\n", content_length);
             } while (content_length > 0);
         }
+        EXPECT = 0;
         return 1;
     }
     return -1;
@@ -216,16 +217,17 @@ void set_content_length(char *request) {
 // not needed, only content length needs to be checked and if its > BYTES/2
 void check_expect_100(char *request) {
     printf("check_expect_100\n");
-    char orig_request[BYTES];
-    strncpy(orig_request, request, BYTES);
-    char *expect = strstr(request, "Expect: 100-continue");
-    if (expect == NULL) {
-        printf("\tno expect-100\n");
-    }
-    else {
-        EXPECT = 1;
-    }
-    strncpy(request, orig_request, BYTES);
+    // char orig_request[BYTES];
+    // strncpy(orig_request, request, BYTES);
+    // char *expect = strstr(request, "Expect: 100-continue");
+    // if (expect == NULL) {
+    //     printf("\tno expect-100\n");
+    // }
+    // else {
+    //     EXPECT = 1;
+    // }
+    if (content_length - strlen(request) > BYTES/2) EXPECT = 1;
+    // strncpy(request, orig_request, BYTES);
 }
 
 void set_home_dir() {
@@ -247,8 +249,8 @@ void httpRequest(int sock, char *request) {
         get_content_from_http(request, content);
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
-        check_expect_100(request);
         set_content_length(request);
+        check_expect_100(request);
         printf("\tpath = %s\n", path);
         write_file_to(sock, path, content);
     }
