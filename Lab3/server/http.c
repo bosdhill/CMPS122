@@ -65,7 +65,7 @@ int create_file_named(char *fname, char content[], int sock) {
     if ((fd = open(fname, flags, 0777)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT) {
-            int recv_bytes = 0;
+            int recv_bytes;
             do {
                 char response[BYTES] = {0};
                 printf("\tHTTP/1.1 100-continue\r\n");
@@ -73,8 +73,9 @@ int create_file_named(char *fname, char content[], int sock) {
                 recv_bytes = recv(sock, (void *)response, BYTES, 0);
                 write(fd, response, BYTES);
                 printf("received: \n%s\n", response);
-                exit(1);
-            } while (recv_bytes != 0);
+                content_length -= recv_bytes;
+                printf("bytes left: %d\n", content_length);
+            } while (content_length > 0);
         }
         return 1;
     }
@@ -208,11 +209,11 @@ void set_content_length(char *request) {
         char *end = length + strlen(length);
         content_length = strtol(length, &end, 10);
         printf("\tcontent-length: %d\n", content_length);
-        exit(1);
     }
     strncpy(request, orig_request, BYTES);
 }
 
+// not needed, only content length needs to be checked and if its > BYTES/2
 void check_expect_100(char *request) {
     printf("check_expect_100\n");
     char orig_request[BYTES];
