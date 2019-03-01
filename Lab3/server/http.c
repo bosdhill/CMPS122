@@ -19,9 +19,9 @@
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
-char SUCCESS[] = "HTTP/1.1 200 OK\r\n";
-char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n";
-char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n";
+char SUCCESS[] = "HTTP/1.1 200 OK\r\n\r\n";
+char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
+char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 
 
 void http_response(int sock, char status[]) {
@@ -30,17 +30,21 @@ void http_response(int sock, char status[]) {
 
 // writes out file to sock
 // if zero bytes, then send NOTFOUND
-static void binary(int sock, char *fname) {
+static int binary(int sock, char *fname) {
     printf("binary\n");
     int fd;
     int bytes;
     void *buffer[BYTES];
+    char *end = "\r\n";
     if ((fd = open(fname, O_RDONLY)) != -1) {
         printf("\tfd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0) {
             write(sock, buffer, bytes);
         }
    }
+   printf("buffer = %s\n", (char *)buffer);
+   write(sock, (void *)end, strlen(end) + 1);
+   return strlen((char *)buffer) == 0? -1: 1;
 }
 
 int create_file_named(char *fname, char content[]) {
@@ -91,11 +95,23 @@ void get_path_to_file(char path[], char file_path[]) {
 void send_file_to(int sock, char path[]) {
     printf("send_file_to\n");
     char absolute_file_path[SIZE] = {0};
+    char absolute_path_to_file[SIZE] = {0};
+    char path_to_file[SIZE/2] = {0};
+    get_path_to_file(path, path_to_file);
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
-    http_response(sock, SUCCESS);
-    binary(sock, absolute_file_path);
+    strncat(absolute_path_to_file, homedir, strlen(homedir) + 1);
+    strncat(absolute_path_to_file, path_to_file, strlen(path) + 1);
+    printf("\tabsolute_path_to_file = %s\n", absolute_path_to_file);
+    if (chdir(absolute_path_to_file) == -1) {
+        http_response(sock, NOTFOUND);
+    }
+    else {
+        http_response(sock, SUCCESS);
+        binary(sock, absolute_file_path);
+    }
+    chdir(homedir);
 }
 
 void write_file_to(int sock, char path[], char content[]) {
@@ -113,8 +129,7 @@ void write_file_to(int sock, char path[], char content[]) {
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
-    chdir(absolute_file_path);
-    if (create_file_named(fname, content) == -1)
+    if (chdir(absolute_file_path) == -1 || create_file_named(fname, content) == -1)
         http_response(sock, BADREQ);
     else
         http_response(sock, SUCCESS);
