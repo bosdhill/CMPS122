@@ -52,8 +52,10 @@ int create_file_named(char *fname, char content[]) {
     return -1;
 }
 
-void get_file_name_from(char *path, char file_name[]) {
+void get_file_name_from(char path[], char file_name[]) {
     printf("get_file_name_from\n");
+    char orig_path[SIZE/2];
+    strncpy(orig_path, path, SIZE/2);
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -62,10 +64,13 @@ void get_file_name_from(char *path, char file_name[]) {
         token = strtok(NULL, delim);
     } while (token != NULL);
     strncpy(file_name, prev, SIZE/2);
+    strncpy(path, orig_path, SIZE/2);
 }
 
-void get_path_to_file(char *path, char file_path[]) {
+void get_path_to_file(char path[], char file_path[]) {
     printf("get_path_to_file\n");
+    char orig_path[SIZE/2];
+    strncpy(orig_path, path, SIZE/2);
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -78,6 +83,7 @@ void get_path_to_file(char *path, char file_path[]) {
             prev = token;
         }
     }
+    strncpy(path, orig_path, SIZE/2);
 }
 
 // need file name
@@ -92,11 +98,12 @@ void send_file_to(int sock, char path[]) {
     binary(sock, absolute_file_path);
 }
 
-void write_file_to(int sock, char *path, char content[]) {
+void write_file_to(int sock, char path[], char content[]) {
     printf("write_file_to\n");
+    printf("path = %s\n", path);
     char absolute_file_path[SIZE] = {0};
     char path_to_file[SIZE/2] = {0};
-    char fname[SIZE/2];
+    char fname[SIZE/2] = {0};
     get_file_name_from(path, fname);
     printf("\tfile = %s\n", fname);
     printf("\tpath is now %s\n", path);
