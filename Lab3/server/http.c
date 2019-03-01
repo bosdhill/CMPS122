@@ -23,7 +23,7 @@ char homedir[SIZE/2] = {0};
 char SUCCESS[] = "HTTP/1.1 200 OK\r\n\r\n";
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
-
+unsigned char EXPECT = 0;
 
 // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int is_regular_file(const char *path)
@@ -58,8 +58,13 @@ static int binary(int sock, char *fname) {
 
 int create_file_named(char *fname, char content[]) {
     int fd;
-    if ((fd = open(fname, O_RDWR | O_CREAT)) != -1) {
+    int flags = (EXPECT == 1? O_RDWR | O_CREAT : O_RDWR | O_CREAT | O_APPEND);
+    if ((fd = open(fname, flags, 0777)) != -1) {
         write(fd, content, BYTES);
+        if (EXPECT) {
+            // HTTP/1.1 100-continue\r\n
+            printf("\tHTTP/1.1 100-continue\r\n");
+        }
         return 1;
     }
     return -1;
@@ -151,9 +156,12 @@ void write_file_to(int sock, char path[], char content[]) {
 
 // extract file path from request body
 void get_path_from_http(char *request, char path[]) {
+    char orig_request[BYTES];
+    strncpy(orig_request, request, BYTES);
     printf("get_path_from_http\n");
     strtok(request, " ");
     strcpy(path, strtok(NULL, " "));
+    strncpy(request, orig_request, BYTES);
 }
 
 void get_after(char *request, char *delim, char after[]){
@@ -164,11 +172,14 @@ void get_after(char *request, char *delim, char after[]){
 
 void get_content_from_http(char *request, char content[]) {
     printf("get_content_from_http\n");
+    char orig_request[BYTES];
+    strncpy(orig_request, request, BYTES);
     char* end = strstr(request, "\r\n\r\n");
     if (end == NULL) {
         printf("cant find carriage newline\n");
     }
     strncpy(content, end + strlen("\r\n\r\n"), BYTES);
+    strncpy(request, orig_request, BYTES);
 }
 
 // get type of request
@@ -183,6 +194,20 @@ enum req_type get_req_type(char *request) {
     return NONE;
 }
 
+void check_expect_100(char *request) {
+    printf("check_expect_100\n");
+    char orig_request[BYTES];
+    strncpy(orig_request, request, BYTES);
+    char *expect = strstr(request, "Expect: 100-continue");
+    if (expect == NULL) {
+        printf("\tno expect-100\n");
+    }
+    else {
+        EXPECT = 1;
+    }
+    strncpy(request, orig_request, BYTES);
+}
+
 void set_home_dir() {
     getcwd(homedir, SIZE);
 }
@@ -192,6 +217,7 @@ void httpRequest(int sock, char *request) {
     if (get_req_type(request) == GET) {
         char path[SIZE/2] = {0};
         get_path_from_http(request, path);
+        check_expect_100(request);
         printf("\tpath = %s\n", path);
         send_file_to(sock, path);
     }
@@ -201,6 +227,7 @@ void httpRequest(int sock, char *request) {
         get_content_from_http(request, content);
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
+        check_expect_100(request);
         printf("\tpath = %s\n", path);
         write_file_to(sock, path, content);
     }
