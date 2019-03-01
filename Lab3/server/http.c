@@ -24,7 +24,7 @@ char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 
 
-void http_response(int sock, char status[]) {
+void send_http_response(int sock, char status[]) {
     send(sock, (void *)status, strlen(status) + 1,0);
 }
 
@@ -105,10 +105,10 @@ void send_file_to(int sock, char path[]) {
     strncat(absolute_path_discl_file, path_to_file, strlen(path) + 1);
     printf("\tabsolute_path_discl_file = %s\n", absolute_path_discl_file);
     if (chdir(absolute_path_discl_file) == -1) {
-        http_response(sock, NOTFOUND);
+        send_http_response(sock, NOTFOUND);
     }
     else {
-        http_response(sock, SUCCESS);
+        send_http_response(sock, SUCCESS);
         binary(sock, absolute_file_path);
     }
     chdir(homedir);
@@ -130,9 +130,9 @@ void write_file_to(int sock, char path[], char content[]) {
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
     if (chdir(absolute_file_path) == -1 || create_file_named(fname, content) == -1)
-        http_response(sock, BADREQ);
+        send_http_response(sock, BADREQ);
     else
-        http_response(sock, SUCCESS);
+        send_http_response(sock, SUCCESS);
     chdir(homedir);
 }
 
@@ -192,5 +192,5 @@ void httpRequest(int sock, char *request) {
         write_file_to(sock, path, content);
     }
     else
-        http_response(sock, BADREQ);
+        send_http_response(sock, BADREQ);
 }
