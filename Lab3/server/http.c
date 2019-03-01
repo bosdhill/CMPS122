@@ -43,19 +43,17 @@ static void binary(int sock, char *fname) {
    }
 }
 
-int create_file_named(char *fname) {
+int create_file_named(char *fname, char content[]) {
     int fd;
-    int bytes;
-    void *buffer[BYTES];
     if ((fd = open(fname, O_RDWR | O_CREAT)) != -1) {
-        while ((bytes = read(fd, buffer, BYTES)) > 0) {
-            write(fd, buffer, bytes);
-        }
+        write(fd, content, BYTES);
+        return 1;
     }
+    return -1;
 }
 
 void get_file_name_from(char *path, char file_name[]) {
-    printf("get_file_name_from");
+    printf("get_file_name_from\n");
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -63,7 +61,7 @@ void get_file_name_from(char *path, char file_name[]) {
         prev = token;
         token = strtok(NULL, delim);
     } while (token != NULL);
-    strncpy(file_name, prev, SIZE/4);
+    strncpy(file_name, prev, SIZE/2);
 }
 
 void get_path_to_file(char *path, char file_path[]) {
@@ -94,13 +92,26 @@ void send_file_to(int sock, char path[]) {
     binary(sock, absolute_file_path);
 }
 
-void write_file_to(int sock, char path[]) {
+void write_file_to(int sock, char *path, char content[]) {
+    printf("write_file_to\n");
     char absolute_file_path[SIZE] = {0};
     char path_to_file[SIZE/2] = {0};
-    strncat(absolute_file_path, homedir, strlen(homedir) + 1);
+    char fname[SIZE/2];
+    get_file_name_from(path, fname);
+    printf("\tfile = %s\n", fname);
+    printf("\tpath is now %s\n", path);
     get_path_to_file(path, path_to_file);
+    printf("\tfile path = %s\n", path_to_file);
+    printf("\tpath is now %s\n", path);
+    strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
+    printf("\tabsolute_path = %s\n", absolute_file_path);
     chdir(absolute_file_path);
+    if (create_file_named(fname, content) == -1)
+        http_response(sock, BADREQ);
+    else
+        http_response(sock, SUCCESS);
+    chdir(homedir);
 }
 
 // extract file path from request body
@@ -158,6 +169,7 @@ void httpRequest(int sock, char *request) {
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
+        write_file_to(sock, path, content);
     }
     else
         http_response(sock, BADREQ);
