@@ -66,18 +66,16 @@ int create_file_named(char *fname, char content[], int sock) {
     if ((fd = open(fname, flags, umask_0)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT) {
+            printf("\tHTTP/1.1 100-continue\r\n");
             EXPECT = 0;
             int recv_bytes;
-            do {
-                char response[BYTES] = {0};
-                printf("\tHTTP/1.1 100-continue\r\n");
-                send_http_response(sock, CONTINUE);
-                recv_bytes = recv(sock, (void *)response, BYTES, 0);
-                write(fd, response, BYTES);
-                printf("received: \n%s\n", response);
-                content_length -= recv_bytes;
-                printf("bytes left: %d\n", content_length);
-            } while (content_length > 0);
+            char response[BYTES] = {0};
+            send_http_response(sock, CONTINUE);
+            recv_bytes = recv(sock, (void *)response, content_length, 0);
+            write(fd, response, content_length);
+            printf("received: \n%s\n", response);
+            content_length -= recv_bytes;
+            printf("bytes left: %d\n", content_length);
         }
         return 1;
     }
