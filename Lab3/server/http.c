@@ -19,9 +19,9 @@
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
-char SUCCESS[] = "\rHTTP/1.1 200 OK\r\n";
-char NOTFOUND[] = "\rHTTP/1.1 404 Not Found\r\n";
-char BADREQ[] = "\rHTTP/1.1 400 Bad Request\r\n"; 
+char SUCCESS[] = "HTTP/1.1 200 OK\r\n";
+char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n";
+char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n";
 
 
 void http_response(int sock, char status[]) {
@@ -67,7 +67,7 @@ void get_file_name_from(char *path, char file_name[]) {
 }
 
 void get_path_to_file(char *path, char file_path[]) {
-    printf("get_path_to_file\n"); 
+    printf("get_path_to_file\n");
     char *delim = "/";
     char *token = strtok(path, delim);
     char *prev = NULL;
@@ -85,7 +85,7 @@ void get_path_to_file(char *path, char file_path[]) {
 // need file name
 // need absolute path to file
 void send_file_to(int sock, char path[]) {
-    printf("send_file_to\n"); 
+    printf("send_file_to\n");
     char absolute_file_path[SIZE] = {0};
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
@@ -110,7 +110,7 @@ void get_path_from_http(char *request, char path[]) {
     strcpy(path, strtok(NULL, " "));
 }
 
-void get_after(char *request, char *delim, char *after){
+void get_after(char *request, char *delim, char after[]){
     strtok(request, delim);
     strcpy(after, strtok(NULL, delim));
 }
@@ -150,7 +150,7 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	// printf("request:%s", request);
+	// printf("request:%s\n", request);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
@@ -163,11 +163,10 @@ void httpRequest(int sock, char *request) {
         char content[BYTES] = {0};
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
-        get_after(request, "\r\n\r\n", content);
+        get_after(request, "\r", content);
         printf("\tcontent = %s\n", content);
-        get_content_from_http(request);
         write_file_to(sock, path);
     }
-    else 
+    else
         http_response(sock, BADREQ);
 }
