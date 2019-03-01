@@ -183,12 +183,12 @@ enum req_type get_req_type(char *request) {
     return NONE;
 }
 
-void setHomeDir() {
+void set_home_dir() {
     getcwd(homedir, SIZE);
 }
 
 void httpRequest(int sock, char *request) {
-    setHomeDir();
+    set_home_dir();
     if (get_req_type(request) == GET) {
         char path[SIZE/2] = {0};
         get_path_from_http(request, path);
