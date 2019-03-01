@@ -111,27 +111,39 @@ void get_path_from_http(char *request, char path[]) {
 }
 
 void get_after(char *request, char *delim, char after[]){
+    printf("get_after\n");
     strtok(request, delim);
     strcpy(after, strtok(NULL, delim));
 }
 
 void get_content_from_http(char *request) {
     printf("get_content_from_http\n");
-    char *content_start = strstr(request, "\r\n\r\n") + strlen("\r\n\r\n");
-    printf("\tcontent = %s\n", content_start);
-    for (int i = 0; content_start[i] != '\0'; i++) {
-        printf("%c", content_start[i]);
+    // char *content_start = strstr(request, "\r\n\r\n") + strlen("\r\n\r\n");
+    // printf("\tcontent = %s\n", content_start);
+    // find the end of the request, which is terminated
+    // by two linebreaks
+    char* end = strstr(request, "\r\n\r\n");
+    if (end == NULL) {
+        printf("cant find carriage newline\n");
+    }
+    printf("content: %s\n", end + strlen("\r\n\r\n"));
+    char* buffer = 0;
+    if(end) {
+        // allocate memory to hold the entire request
+        buffer = malloc((end - request) + 1);
+        if(buffer) {
+            // copy request to buffer
+            memcpy(buffer, request, end - request);
+            // null terminate the buffer
+            buffer[end - request] = 0;
+            // do something with the buffer
+            // printf("buffer = %s\n", buffer);
+            // don't forget to release the allocated memory
+            free(buffer);
+        }
     }
 }
 
-// strtok by \n
-// check first of line of each with get
-/*
-GET /hello/world HTTP/1.1
-Host: localhost:4200
-User-Agent: curl/7.47.0
-Accept:
-*/
 // get type of request
 enum req_type getReqType(char *request) {
     char *req_type;
@@ -150,7 +162,9 @@ void setHomeDir() {
 
 // \r\n is a newline in curl
 void httpRequest(int sock, char *request) {
-	// printf("request:%s\n", request);
+	printf("request:\n%s\n", request);
+    // printf("hexdump:\n");
+    // int i; for (i = 0; i < strlen(request) + 1; i++) printf("%02X", request[i]);
     setHomeDir();
     if (getReqType(request) == GET) {
         char path[SIZE/2] = {0};
@@ -161,11 +175,11 @@ void httpRequest(int sock, char *request) {
     else if (getReqType(request) == POST) {
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
+        get_content_from_http(request);
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
-        get_after(request, "\r", content);
-        printf("\tcontent = %s\n", content);
-        write_file_to(sock, path);
+        // printf("\tcontent = %s\n", content);
+        // write_file_to(sock, path);
     }
     else
         http_response(sock, BADREQ);
