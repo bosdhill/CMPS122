@@ -122,7 +122,7 @@ void get_content_from_http(char *request, char content[]) {
     if (end == NULL) {
         printf("cant find carriage newline\n");
     }
-    printf("\tcontent = %s\n", end + strlen("\r\n\r\n"));
+    strncpy(content, end + strlen("\r\n\r\n"), BYTES);
 }
 
 // get type of request
@@ -155,6 +155,7 @@ void httpRequest(int sock, char *request) {
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
         get_content_from_http(request, content);
+        printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         printf("\tpath = %s\n", path);
     }
