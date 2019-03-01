@@ -214,20 +214,9 @@ void set_content_length(char *request) {
     strncpy(request, orig_request, BYTES);
 }
 
-// not needed, only content length needs to be checked and if its > BYTES/2
 void check_expect_100(char *request) {
     printf("check_expect_100\n");
-    // char orig_request[BYTES];
-    // strncpy(orig_request, request, BYTES);
-    // char *expect = strstr(request, "Expect: 100-continue");
-    // if (expect == NULL) {
-    //     printf("\tno expect-100\n");
-    // }
-    // else {
-    //     EXPECT = 1;
-    // }
     if (content_length - strlen(request) > BYTES/2) EXPECT = 1;
-    // strncpy(request, orig_request, BYTES);
 }
 
 void set_home_dir() {
