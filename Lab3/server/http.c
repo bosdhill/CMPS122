@@ -95,16 +95,16 @@ void get_path_to_file(char path[], char file_path[]) {
 void send_file_to(int sock, char path[]) {
     printf("send_file_to\n");
     char absolute_file_path[SIZE] = {0};
-    char absolute_path_to_file[SIZE] = {0};
+    char absolute_path_discl_file[SIZE] = {0};
     char path_to_file[SIZE/2] = {0};
     get_path_to_file(path, path_to_file);
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
-    strncat(absolute_path_to_file, homedir, strlen(homedir) + 1);
-    strncat(absolute_path_to_file, path_to_file, strlen(path) + 1);
-    printf("\tabsolute_path_to_file = %s\n", absolute_path_to_file);
-    if (chdir(absolute_path_to_file) == -1) {
+    strncat(absolute_path_discl_file, homedir, strlen(homedir) + 1);
+    strncat(absolute_path_discl_file, path_to_file, strlen(path) + 1);
+    printf("\tabsolute_path_discl_file = %s\n", absolute_path_discl_file);
+    if (chdir(absolute_path_discl_file) == -1) {
         http_response(sock, NOTFOUND);
     }
     else {
