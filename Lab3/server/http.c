@@ -23,7 +23,9 @@ char homedir[SIZE/2] = {0};
 char SUCCESS[] = "HTTP/1.1 200 OK\r\n\r\n";
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+char CONTINUE[] = "HTTP/1.1 100-continue\r\n";
 unsigned char EXPECT = 0;
+int content_length = 0;
 
 // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int is_regular_file(const char *path)
@@ -56,14 +58,23 @@ static int binary(int sock, char *fname) {
    return strlen((char *)buffer) == 0? -1: 1;
 }
 
-int create_file_named(char *fname, char content[]) {
+int create_file_named(char *fname, char content[], int sock) {
+    printf("create_file_named\n");
     int fd;
     int flags = (EXPECT == 1? O_RDWR | O_CREAT : O_RDWR | O_CREAT | O_APPEND);
     if ((fd = open(fname, flags, 0777)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT) {
-            // HTTP/1.1 100-continue\r\n
-            printf("\tHTTP/1.1 100-continue\r\n");
+            int recv_bytes = 0;
+            do {
+                char response[BYTES] = {0};
+                printf("\tHTTP/1.1 100-continue\r\n");
+                send_http_response(sock, CONTINUE);
+                recv_bytes = recv(sock, (void *)response, BYTES, 0);
+                write(fd, response, BYTES);
+                printf("received: \n%s\n", response);
+                exit(1);
+            } while (recv_bytes != 0);
         }
         return 1;
     }
@@ -147,7 +158,7 @@ void write_file_to(int sock, char path[], char content[]) {
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path_to_file, strlen(homedir) + 1);
     printf("\tabsolute_path = %s\n", absolute_file_path);
-    if (chdir(absolute_file_path) == -1 || create_file_named(fname, content) == -1)
+    if (chdir(absolute_file_path) == -1 || create_file_named(fname, content, sock) == -1)
         send_http_response(sock, BADREQ);
     else
         send_http_response(sock, SUCCESS);
@@ -156,9 +167,9 @@ void write_file_to(int sock, char path[], char content[]) {
 
 // extract file path from request body
 void get_path_from_http(char *request, char path[]) {
+    printf("get_path_from_http\n");
     char orig_request[BYTES];
     strncpy(orig_request, request, BYTES);
-    printf("get_path_from_http\n");
     strtok(request, " ");
     strcpy(path, strtok(NULL, " "));
     strncpy(request, orig_request, BYTES);
@@ -186,6 +197,19 @@ enum req_type get_req_type(char *request) {
         return POST;
     }
     return NONE;
+}
+
+void set_content_length(char *request) {
+    printf("set_content_length\n");
+    char orig_request[BYTES];
+    strncpy(orig_request, request, BYTES);
+    char *length = strstr(request, "Content-Length: ") + strlen("Content-Length: ");
+    if (length != NULL) {
+        printf("\tcontent-length: %s\n", length);
+        // content_length = strtoumax(length, NULL, 10);
+        exit(1);
+    }
+    strncpy(request, orig_request, BYTES);
 }
 
 void check_expect_100(char *request) {
@@ -222,6 +246,7 @@ void httpRequest(int sock, char *request) {
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         check_expect_100(request);
+        set_content_length(request);
         printf("\tpath = %s\n", path);
         write_file_to(sock, path, content);
     }
