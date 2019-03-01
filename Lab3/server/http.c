@@ -154,16 +154,12 @@ void create_directory_path_from(char path[]) {
     strncpy(orig_path, path, SIZE/2);
     char *delim = "/";
     char *token = strtok(path, delim);
-    strncat(dir_path, token, SIZE);
-    strncat(dir_path, delim, SIZE);
-    chdir(homedir);
     do {
         mkdir(dir_path, umask_0);
         printf("\tpwd: %s\n", dir_path);
-        token = strtok(NULL, delim);
         strncat(dir_path, token, SIZE);
         strncat(dir_path, delim, SIZE);
-    } while(token != NULL);
+    } while((token = strtok(NULL, delim)) != NULL);
     strncpy(path, dir_path, SIZE);
     printf("\tpath is now %s\n", path);
     exit(1);
