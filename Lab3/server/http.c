@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #define BYTES 2048
 #define VALID 1
@@ -37,12 +38,16 @@ int is_regular_file(const char *path)
 }
 
 void send_http_response(int sock, char status[]) {
-    send(sock, (void *)status, strlen(status) + 1,0);
+    printf("send_http_response\n");
+    printf("\tsending code: %s\n", status);
+    if (send(sock, (void *)status, strlen(status) + 1,0) == -1) {
+        perror("send");
+    }
 }
 
 // writes out file to sock
 // if zero bytes, then send NOTFOUND
-static int binary(int sock, char *fname) {
+static void binary(int sock, char *fname) {
     printf("binary\n");
     int fd;
     int bytes;
@@ -55,8 +60,6 @@ static int binary(int sock, char *fname) {
         }
    }
    printf("buffer = %s\n", (char *)buffer);
-//    write(sock, (void *)end, strlen(end) + 1);
-   return strlen((char *)buffer) == 0? -1: 1;
 }
 
 int create_file_named(char *fname, char content[], int sock) {
@@ -77,6 +80,7 @@ int create_file_named(char *fname, char content[], int sock) {
             content_length -= recv_bytes;
             printf("bytes left: %d\n", content_length);
         }
+        printf("gets here?\n");
         return 1;
     }
     return -1;
@@ -160,7 +164,6 @@ void create_directory_path_from(char path[]) {
     } while((token = strtok(NULL, delim)) != NULL);
     strncpy(path, dir_path, SIZE);
     printf("\tpath is now %s\n", path);
-    exit(1);
 }
 
 void write_file_to(int sock, char path[], char content[]) {
@@ -184,6 +187,8 @@ void write_file_to(int sock, char path[], char content[]) {
         send_http_response(sock, BADREQ);
     else
         send_http_response(sock, SUCCESS);
+    printf("huh??");
+    printf("pwd: %s\n",getcwd(NULL,SIZE));
     chdir(homedir);
 }
 
