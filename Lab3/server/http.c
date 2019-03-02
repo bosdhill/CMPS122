@@ -229,7 +229,22 @@ void user_pass_from_http(const char *content, char *user, char *pass) {
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
     printf("\tuser = %s\n", user);
-    printf("\tpass = %s\n", pass);
+    printf("pass = %s\n", pass);
+}
+
+void verify_user(char *user, char *pass) {
+    char const* const fileName = "users"; /* should check that argc > 1 */
+    FILE* file = fopen(fileName, "r"); /* should check the result */
+    char line[USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1];
+
+    while (fgets(line, sizeof(line), file)) {
+        /* note that fgets don't strip the terminating \n, checking its
+           presence would allow to handle lines longer that sizeof(line) */
+        printf("%s", line);
+    }
+    /* may check feof here to make a difference between eof and io failure -- network
+       timeout for instance */
+    fclose(file);
     exit(1);
 }
 
@@ -304,6 +319,7 @@ void httpRequest(int sock, char *request) {
         char content[BYTES] = {0};
         get_content_from_http(request, content);
         user_pass_from_http(content, user, pass);
+        verify_user(user, pass);
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         set_content_length(request);
