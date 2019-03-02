@@ -241,18 +241,19 @@ int get_user_pass_from_http(const char *content, char *user, char *pass) {
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
     printf("\tuser = %s\n", user);
-    printf("pass = %s\n", pass);
+    printf("\tpass = %s\n", pass);
     return 1;
 }
 
 void get_user_from_path(const char *path, char user[]) {
-    printf("get_user_from_http\n");
+    printf("get_user_from_path\n");
     printf("\tpath = %s\n", path);
     char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
+    printf("\torig_path = %s\n", orig_path);
     char *token = strtok(orig_path, "/");
-    if (token != NULL)
-        printf("\tuser = %s\n", token);
-    strncpy(user, token, SIZE);
+    printf("\tuser = %s\n", token);
+    strncpy(user, token, USERMAX + 1);
 }
 
 int verify_user(const char *user, const char *pass) {
@@ -278,6 +279,8 @@ int verify_cookie(const char *path, const char *cookie) {
     printf("verify_cookie\n");
     char user[USERMAX + 1];
     get_user_from_path(path, user);
+    printf("\tuser = %s...\n", user);
+    printf("\tcookie = %s...\n", cookie);
     return verify_user(user, cookie);
 }
 
@@ -310,7 +313,8 @@ int get_cookie_from_http(const char *request, char cookie[]) {
         return INVALID;
     }
     strncpy(cookie, begin + strlen("Cookie: cookie="), PASSMAX);
-    printf("cookie = %s\n", cookie);
+    cookie[strcspn(cookie, "\r\n")] = 0;
+    printf("cookie = %s...\n", cookie);
     return VALID;
 }
 
