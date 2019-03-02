@@ -43,58 +43,58 @@ int is_regular_file(const char *path)
 }
 
 void send_http_response(int sock, char status[]) {
-    printf("send_http_response\n");
-    printf("\tsending code: %s\n", status);
+    // printf("send_http_response\n");
+    // printf("\tsending code: %s\n", status);
     if (send(sock, (void *)status, strlen(status) + 1,0) == -1) {
         perror("send");
     }
 }
 
 void send_http_cookie(int sock, char cookie[]) {
-    printf("send_http_cookie\n");
+    // printf("send_http_cookie\n");
     strcat(cookie, "\r\n");
     send(sock, (void *)COOKIE, strlen(COOKIE) + 1,0);
     send(sock, (void *)cookie, strlen(cookie) + 1,0);
-    printf("\tsending code: %s\n", cookie);
+    // printf("\tsending code: %s\n", cookie);
 }
 
 
 // writes out file to sock
 // if zero bytes, then send NOTFOUND
 static void binary(int sock, char *fname) {
-    printf("binary\n");
+    // printf("binary\n");
     int fd;
     int bytes;
     void *buffer[BYTES];
     // char *end = "\r\n";
     if ((fd = open(fname, O_RDONLY)) != -1) {
-        printf("\tfd = %d\n", fd);
+        // printf("\tfd = %d\n", fd);
         while ((bytes = read(fd, buffer, BYTES)) > 0) {
             write(sock, buffer, bytes);
         }
    }
-   printf("buffer = %s\n", (char *)buffer);
+   // printf("buffer = %s\n", (char *)buffer);
 }
 
 int create_file_named(const char *fname, char content[], int sock) {
-    printf("create_file_named\n");
+    // printf("create_file_named\n");
     int fd;
     int flags = O_RDWR | O_CREAT | O_TRUNC;
     if (EXPECT) flags |= O_APPEND;
-    printf("\tfname = %s\n", fname);
+    // printf("\tfname = %s\n", fname);
     if ((fd = open(fname, flags, umask_0)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT == 1) {
-            printf("\tHTTP/1.1 100-continue\r\n");
+            // printf("\tHTTP/1.1 100-continue\r\n");
             int recv_bytes;
             char response[content_length];
             memset(response, '\0', content_length);
             send_http_response(sock, CONTINUE);
             recv_bytes = recv(sock, (void *)response, content_length, 0);
             write(fd, response, content_length);
-            printf("received: \n%s\n", (char *)response);
+            // printf("received: \n%s\n", (char *)response);
             content_length -= recv_bytes;
-            printf("bytes left: %d\n", content_length);
+            // printf("bytes left: %d\n", content_length);
         }
         EXPECT = 0;
         content_length = 0;
@@ -218,8 +218,10 @@ void write_file_to(int sock, const char path[], char content[]) {
     printf("\tfile name = %s\n", fname);
     printf("\tpath to file = %s\n", path_to_file);
     printf("\tpath = %s\n", path);
-    if (create_directory_path_from(path_to_file, dir_path) == INVALID)
+    if (create_directory_path_from(path_to_file, dir_path) == INVALID){
         send_http_response(sock, BADREQ);
+        exit(-1);
+    }
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
     printf("absolute = %s\n", absolute_file_path);
@@ -228,39 +230,39 @@ void write_file_to(int sock, const char path[], char content[]) {
         send_http_response(sock, BADREQ);
     else
         send_http_response(sock, SUCCESS);
-    // printf("huh??");
-    printf("pwd: %s\n",getcwd(NULL,SIZE));
+    // // printf("huh??");
+    // printf("pwd: %s\n",getcwd(NULL,SIZE));
     chdir(homedir);
 }
 
 int get_user_pass_from_http(const char *content, char *user, char *pass) {
-    printf("get_user_pass_from_http\n");
+    // printf("get_user_pass_from_http\n");
     char orig_content[SIZE];
     strncpy(orig_content, content, SIZE);
     char *token = strtok(orig_content, "&");
     if (token == NULL) return INVALID;
-    // printf("token %s\n", token);
+    // // printf("token %s\n", token);
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
-    printf("\tpass=%s\n", pass);
-    printf("\tuser=%s\n", user);
+    // printf("\tpass=%s\n", pass);
+    // printf("\tuser=%s\n", user);
     return VALID;
 }
 
 void get_user_from_path(const char *path, char user[]) {
-    printf("get_user_from_path\n");
-    printf("\tpath = %s\n", path);
+    // printf("get_user_from_path\n");
+    // printf("\tpath = %s\n", path);
     char orig_path[SIZE];
     strncpy(orig_path, path, SIZE);
-    printf("\torig_path = %s\n", orig_path);
+    // printf("\torig_path = %s\n", orig_path);
     char *token = strtok(orig_path, "/");
-    printf("\tuser = %s\n", token);
+    // printf("\tuser = %s\n", token);
     strncpy(user, token, USERMAX + 1);
 }
 
 int verify_user(const char *user, const char *pass) {
-    printf("verify_user\n");
+    // printf("verify_user\n");
     FILE* file = fopen("users", "r");
     char line[USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1];
     char *next_user = NULL;
@@ -278,17 +280,17 @@ int verify_user(const char *user, const char *pass) {
 }
 
 int verify_cookie(const char *path, const char *cookie) {
-    printf("verify_cookie\n");
+    // printf("verify_cookie\n");
     char user[USERMAX + 1];
     get_user_from_path(path, user);
-    printf("\tuser = %s...\n", user);
-    printf("\tcookie = %s...\n", cookie);
+    // printf("\tuser = %s...\n", user);
+    // printf("\tcookie = %s...\n", cookie);
     return verify_user(user, cookie);
 }
 
 // extract file path from request body
 void get_path_from_http(const char *request, char path[]) {
-    printf("get_path_from_http\n");
+    // printf("get_path_from_http\n");
     char orig_request[SIZE];
     strncpy(orig_request, request, SIZE);
     strtok(orig_request, " ");
@@ -296,16 +298,17 @@ void get_path_from_http(const char *request, char path[]) {
 }
 
 void get_content_from_http(const char *request, char content[]) {
-    printf("get_content_from_http\n");
+    // printf("get_content_from_http\n");
     char* end = strstr(request, "\r\n\r\n");
     if (end == NULL) {
-        printf("cant find carriage newline\n");
+        return;
+        // printf("cant find carriage newline\n");
     }
     strncpy(content, end + strlen("\r\n\r\n"), BYTES);
 }
 
 int get_cookie_from_http(const char *request, char cookie[]) {
-    printf("get_cookie_from_http\n");
+    // printf("get_cookie_from_http\n");
     char orig_request[SIZE];
     strncpy(orig_request, request, SIZE);
     char* begin = strstr(request, "Cookie: cookie=");
@@ -314,7 +317,7 @@ int get_cookie_from_http(const char *request, char cookie[]) {
     }
     strncpy(cookie, begin + strlen("Cookie: cookie="), PASSMAX);
     cookie[strcspn(cookie, "\r\n")] = 0;
-    printf("cookie = %s...\n", cookie);
+    // printf("cookie = %s...\n", cookie);
     return VALID;
 }
 
@@ -338,23 +341,23 @@ enum req_type get_req_type(const char *request) {
 // http://<host>:<port>/login?username=<user>&password=<pass>
 // login?username=Bobby&password=Dhillon
 void set_content_length(const char *request) {
-    printf("set_content_length\n");
+    // printf("set_content_length\n");
     char *length = strstr(request, "Content-Length: ") + strlen("Content-Length: ");
     if (length != NULL) {
         char *end = length + strlen(length);
         content_length = strtol(length, &end, 10);
-        printf("\tcontent-length: %d\n", content_length);
+        // printf("\tcontent-length: %d\n", content_length);
     }
 }
 
 void set_cookie(const char *user, const char *pass, char cookie[]) {
-    printf("set_cookie\n");
+    // printf("set_cookie\n");
     strncpy(cookie, pass, PASSMAX);
-    printf("\n");
+    // printf("\n");
 }
 
 void check_expect_100(char *request) {
-    printf("check_expect_100\n");
+    // printf("check_expect_100\n");
     if (abs(content_length - (int)strlen(request)) > (BYTES/2)) EXPECT = 1;
 }
 
@@ -370,7 +373,7 @@ void httpRequest(int sock, char *request) {
         char cookie[PASSMAX + strlen("\r\n") + 1];
         get_path_from_http(request, path);
         if (verify(request, path, cookie)) {
-            printf("\tpath = %s\n", path);
+            // printf("\tpath = %s\n", path);
             send_file_to(sock, path);
         }
         else
@@ -386,10 +389,10 @@ void httpRequest(int sock, char *request) {
         // get_content_from_http(request, content);
         if (verify(request, path, cookie)) {
             get_content_from_http(request, content);
-            printf("\tcontent = %s\n", content);
+            // printf("\tcontent = %s\n", content);
             set_content_length(request);
             check_expect_100(request);
-            printf("\tpath = %s\n", path);
+            // printf("\tpath = %s\n", path);
             write_file_to(sock, path, content);
         }
         else {
