@@ -62,10 +62,10 @@ static void binary(int sock, char *fname) {
    printf("buffer = %s\n", (char *)buffer);
 }
 
-int create_file_named(char *fname, char content[], int sock) {
+int create_file_named(const char *fname, char content[], int sock) {
     printf("create_file_named\n");
     int fd;
-    int flags = (EXPECT == 1? O_RDWR | O_CREAT : O_RDWR | O_CREAT | O_APPEND);
+    int flags = (O_RDWR | O_CREAT | O_TRUNC);
     printf("\tfname = %s\n", fname);
     if ((fd = open(fname, flags, umask_0)) != -1) {
         write(fd, content, BYTES);
@@ -82,33 +82,33 @@ int create_file_named(char *fname, char content[], int sock) {
         }
         EXPECT = 0;
         content_length = 0;
+        close(fd);
         printf("gets here?\n");
         return 1;
     }
     return -1;
 }
 
-void get_file_name_from(char path[], char file_name[]) {
+void get_file_name_from(const char path[], char file_name[]) {
     printf("get_file_name_from\n");
-    char orig_path[SIZE/2];
-    strncpy(orig_path, path, SIZE/2);
+    char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
     char *delim = "/";
-    char *token = strtok(path, delim);
+    char *token = strtok(orig_path, delim);
     char *prev = NULL;
     do {
         prev = token;
         token = strtok(NULL, delim);
     } while (token != NULL);
-    strncpy(file_name, prev, SIZE/2);
-    strncpy(path, orig_path, SIZE/2);
+    strncpy(file_name, prev, SIZE);
 }
 
-void get_path_to_file(char path[], char file_path[]) {
+void get_path_to_file(const char path[], char file_path[]) {
     printf("get_path_to_file\n");
-    char orig_path[SIZE/2];
-    strncpy(orig_path, path, SIZE/2);
+    char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
     char *delim = "/";
-    char *token = strtok(path, delim);
+    char *token = strtok(orig_path, delim);
     char *prev = NULL;
     strcat(file_path, delim);
     if (token != NULL) {
@@ -119,7 +119,6 @@ void get_path_to_file(char path[], char file_path[]) {
             prev = token;
         }
     }
-    strncpy(path, orig_path, SIZE/2);
 }
 
 
@@ -152,59 +151,59 @@ void send_file_to(int sock, char path[]) {
 }
 
 // pre-cond: at least one directory since root exists
-void create_directory_path_from(char path[]) {
+void create_directory_path_from(const char path[], char dir_path[]) {
     printf("create_directory_path_from\n");
-    char orig_path[SIZE/2];
-    char dir_path[SIZE] = {0};
-    strncpy(orig_path, path, SIZE/2);
+    char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
     char *delim = "/";
-    char *token = strtok(path, delim);
+    char *token = strtok(orig_path, delim);
     do {
         strncat(dir_path, token, SIZE);
         strncat(dir_path, delim, SIZE);
         printf("\tpwd: %s\n", dir_path);
         mkdir(dir_path, umask_0);
     } while((token = strtok(NULL, delim)) != NULL);
-    strncpy(path, dir_path, SIZE);
-    printf("\tpath is now %s\n", path);
+    printf("\tdir_path is now %s\n", dir_path);
 }
 
-void get_path_to_file_and_filename(char path[], char file[], char file_path[]) {
+void get_path_to_file_and_filename(const char *path, char file[], char file_path[]) {
     printf("get_path_to_file_and_file\n");
-    char orig_path[SIZE/2] = {0};
+    char orig_path[SIZE] = {0};
+    strncpy(orig_path, path, SIZE);
     char *delim = "/";
-    char *token = strtok(path, delim);
+    char *token = strtok(orig_path, delim);
     char *prev = NULL;
-    strcat(orig_path, delim);
+    strcat(file_path, delim);
     if (token != NULL) {
         prev = token;
         while ((token = strtok(NULL, delim)) != NULL) {
-            strcat(orig_path, prev);
-            strcat(orig_path, delim);
+            strcat(file_path, prev);
+            strcat(file_path, delim);
             prev = token;
         }
     }
     strncpy(file, prev, strlen(prev) + 1);
-    strncpy(file_path, orig_path, strlen(orig_path) + 1);
     printf("file = %s\n", file);
-    printf("path to it is = %s\n", orig_path);
+    printf("path to it is = %s\n", file_path);
 }
 
-void write_file_to(int sock, char path[], char content[]) {
+void write_file_to(int sock, const char path[], char content[]) {
     printf("write_file_to\n");
     printf("path = %s\n", path);
     char absolute_file_path[SIZE] = {0};
-    char path_to_file[SIZE/4] = {0};
-    char fname[SIZE/4] = {0};
-    char orig_path[SIZE];
-    strncpy(orig_path, path, SIZE);
+    char path_to_file[SIZE] = {0};
+    char fname[SIZE] = {0};
+    char dir_path[SIZE] = {0};
+    // char orig_path[SIZE];
+    // strncpy(orig_path, path, SIZE);
     printf("\tpath is now %s\n", path);
     get_path_to_file_and_filename(path, fname, path_to_file);
     printf("\tfile name = %s\n", fname);
     printf("\tpath to file = %s\n", path_to_file);
-    create_directory_path_from(path_to_file);
+    printf("\tpath = %s\n", path);
+    create_directory_path_from(path_to_file, dir_path);
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
-    strncat(absolute_file_path, orig_path, strlen(orig_path) + 1);
+    strncat(absolute_file_path, path, strlen(path) + 1);
     printf("absolute = %s\n", absolute_file_path);
     // chdir(absolute_file_path);
     if(create_file_named(absolute_file_path, content, sock) == -1)
@@ -217,29 +216,25 @@ void write_file_to(int sock, char path[], char content[]) {
 }
 
 // extract file path from request body
-void get_path_from_http(char *request, char path[]) {
+void get_path_from_http(const char *request, char path[]) {
     printf("get_path_from_http\n");
     char orig_request[BYTES];
     strncpy(orig_request, request, BYTES);
-    strtok(request, " ");
+    strtok(orig_request, " ");
     strcpy(path, strtok(NULL, " "));
-    strncpy(request, orig_request, BYTES);
 }
 
-void get_content_from_http(char *request, char content[]) {
+void get_content_from_http(const char *request, char content[]) {
     printf("get_content_from_http\n");
-    char orig_request[BYTES];
-    strncpy(orig_request, request, BYTES);
     char* end = strstr(request, "\r\n\r\n");
     if (end == NULL) {
         printf("cant find carriage newline\n");
     }
     strncpy(content, end + strlen("\r\n\r\n"), BYTES);
-    strncpy(request, orig_request, BYTES);
 }
 
 // get type of request
-enum req_type get_req_type(char *request) {
+enum req_type get_req_type(const char *request) {
     char *req_type;
     if ((req_type = strstr(request, "GET")) != NULL && req_type == request) {
         return GET;
@@ -250,17 +245,17 @@ enum req_type get_req_type(char *request) {
     return NONE;
 }
 
-void set_content_length(char *request) {
+void set_content_length(const char *request) {
     printf("set_content_length\n");
-    char orig_request[BYTES];
-    strncpy(orig_request, request, BYTES);
+    // char orig_request[BYTES];
+    // strncpy(orig_request, request, BYTES);
     char *length = strstr(request, "Content-Length: ") + strlen("Content-Length: ");
     if (length != NULL) {
         char *end = length + strlen(length);
         content_length = strtol(length, &end, 10);
         printf("\tcontent-length: %d\n", content_length);
     }
-    strncpy(request, orig_request, BYTES);
+    // strncpy(request, orig_request, BYTES);
 }
 
 void check_expect_100(char *request) {
