@@ -18,12 +18,15 @@
 #define VALID 1
 #define INVALID 0
 #define SIZE 512
+#define USERMAX 30
+#define PASSMAX 30
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
 char SUCCESS[] = "HTTP/1.1 200 OK\r\n\r\n";
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+char FORBIDDEN[] = "HTTP/1.1 401 Forbidden\r\n\r\n";
 char CONTINUE[] = "HTTP/1.1 100-continue\r\n";
 unsigned char EXPECT = 0;
 int content_length = 0;
@@ -123,7 +126,6 @@ void get_path_to_file(const char path[], char file_path[]) {
     }
 }
 
-
 // need file name
 // need absolute path to file
 void send_file_to(int sock, char path[]) {
@@ -217,11 +219,25 @@ void write_file_to(int sock, const char path[], char content[]) {
     chdir(homedir);
 }
 
+void user_pass_from_http(const char *content, char *user, char *pass) {
+    printf("user_pass_from_http\n");
+    char orig_content[SIZE];
+    strncpy(orig_content, content, SIZE);
+    char *token = strtok(orig_content, "&");
+    printf("token %s\n", token);
+    strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
+    token = strtok(NULL, "&");
+    strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
+    printf("\tuser = %s\n", user);
+    printf("\tpass = %s\n", pass);
+    exit(1);
+}
+
 // extract file path from request body
 void get_path_from_http(const char *request, char path[]) {
     printf("get_path_from_http\n");
-    char orig_request[BYTES];
-    strncpy(orig_request, request, BYTES);
+    char orig_request[SIZE];
+    strncpy(orig_request, request, SIZE);
     strtok(orig_request, " ");
     strcpy(path, strtok(NULL, " "));
 }
@@ -246,6 +262,9 @@ enum req_type get_req_type(const char *request) {
     }
     return NONE;
 }
+
+// http://<host>:<port>/login?username=<user>&password=<pass>
+// login?username=Bobby&password=Dhillon
 
 void set_content_length(const char *request) {
     printf("set_content_length\n");
@@ -279,9 +298,12 @@ void httpRequest(int sock, char *request) {
         send_file_to(sock, path);
     }
     else if (get_req_type(request) == POST) {
+        char user[USERMAX + 1];
+        char pass[PASSMAX + 1];
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
         get_content_from_http(request, content);
+        user_pass_from_http(content, user, pass);
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         set_content_length(request);
