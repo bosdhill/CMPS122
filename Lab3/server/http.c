@@ -34,13 +34,6 @@ int content_length = 0;
 mode_t umask_0 = 0777;
 char key[] = "abcehdajelal2jalkjs";
 
-
-void generate_key(char *key) {
-    for (int i = 0; i < PASSMAX; i++) {
-        key[i] = rand() | 0xff;
-    }
-}
-
 // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int is_regular_file(const char *path)
 {
@@ -63,8 +56,8 @@ void send_http_cookie(int sock, char cookie[]) {
     send(sock, (void *)COOKIE, strlen(COOKIE) + 1,0);
     send(sock, (void *)cookie, strlen(cookie) + 1,0);
     printf("\tsending code: %s\n", cookie);
-    exit(1);
 }
+
 
 // writes out file to sock
 // if zero bytes, then send NOTFOUND
@@ -237,18 +230,29 @@ void write_file_to(int sock, const char path[], char content[]) {
     chdir(homedir);
 }
 
-void user_pass_from_http(const char *content, char *user, char *pass) {
-    printf("user_pass_from_http\n");
+int get_user_pass_from_http(const char *content, char *user, char *pass) {
+    printf("get_user_pass_from_http\n");
     char orig_content[SIZE];
     strncpy(orig_content, content, SIZE);
     char *token = strtok(orig_content, "&");
-    if (token == NULL) return;
+    if (token == NULL) return -1;
     // printf("token %s\n", token);
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
     printf("\tuser = %s\n", user);
     printf("pass = %s\n", pass);
+    return 1;
+}
+
+void get_user_from_path(const char *path, char user[]) {
+    printf("get_user_from_http\n");
+    printf("\tpath = %s\n", path);
+    char orig_path[SIZE];
+    char *token = strtok(orig_path, "/");
+    if (token != NULL)
+        printf("\tuser = %s\n", token);
+    strncpy(user, token, SIZE);
 }
 
 int verify_user(const char *user, const char *pass) {
@@ -270,6 +274,13 @@ int verify_user(const char *user, const char *pass) {
     return INVALID;
 }
 
+int verify_cookie(const char *path, const char *cookie) {
+    printf("verify_cookie\n");
+    char user[USERMAX + 1];
+    get_user_from_path(path, user);
+    return verify_user(user, cookie);
+}
+
 // extract file path from request body
 void get_path_from_http(const char *request, char path[]) {
     printf("get_path_from_http\n");
@@ -277,6 +288,8 @@ void get_path_from_http(const char *request, char path[]) {
     strncpy(orig_request, request, SIZE);
     strtok(orig_request, " ");
     strcpy(path, strtok(NULL, " "));
+    printf("\tpath = %s\n", path);
+    printf("\tlen of path = %d\n", strlen(path));
 }
 
 void get_content_from_http(const char *request, char content[]) {
@@ -286,6 +299,24 @@ void get_content_from_http(const char *request, char content[]) {
         printf("cant find carriage newline\n");
     }
     strncpy(content, end + strlen("\r\n\r\n"), BYTES);
+}
+
+int get_cookie_from_http(const char *request, char cookie[]) {
+    printf("get_cookie_from_http\n");
+    char orig_request[SIZE];
+    strncpy(orig_request, request, SIZE);
+    char* begin = strstr(request, "Cookie: cookie=");
+    if (begin == NULL) {
+        return INVALID;
+    }
+    strncpy(cookie, begin + strlen("Cookie: cookie="), PASSMAX);
+    printf("cookie = %s\n", cookie);
+    return VALID;
+}
+
+int verify(const char *request, const char *path, char cookie[]) {
+    return get_cookie_from_http(request, cookie) == VALID
+            && verify_cookie(path, cookie) == VALID;
 }
 
 // get type of request
@@ -302,57 +333,19 @@ enum req_type get_req_type(const char *request) {
 
 // http://<host>:<port>/login?username=<user>&password=<pass>
 // login?username=Bobby&password=Dhillon
-
 void set_content_length(const char *request) {
     printf("set_content_length\n");
-    // char orig_request[BYTES];
-    // strncpy(orig_request, request, BYTES);
     char *length = strstr(request, "Content-Length: ") + strlen("Content-Length: ");
     if (length != NULL) {
         char *end = length + strlen(length);
         content_length = strtol(length, &end, 10);
         printf("\tcontent-length: %d\n", content_length);
     }
-    // strncpy(request, orig_request, BYTES);
 }
 
-// void string_to_hex(const char *str, char *hex) {
-//     printf("string_to_hex\n");
-//     int val;
-//     val = (int) strtol(str, NULL, 0); // error checking omitted for brevity
-//     sprintf(hex, "%x", val);
-//     printf("hex: %s\n", hex);
-// }
-
-// void hex_to_string(char *hex, char *str) {
-//     printf("hex_to_string\n");
-//     for (int i = 0; i < strlen(hex); i++) {
-//         sprintf(str[i], "%x", hex[i]);
-//     }
-// }
-// XOR user password with base62
 void set_cookie(const char *user, const char *pass, char cookie[]) {
     printf("set_cookie\n");
     strncpy(cookie, pass, PASSMAX);
-    // char pass_from_cipher[PASSMAX + 1];
-    // void *cipher = calloc(PASSMAX + 1, sizeof(char));
-    // int len = strlen(pass);
-    // for(int i = 0; i < len ; ++i)
-    //     cookie[i] = (char)(pass[i] ^ key[i]);
-    // printf("PlainText One: %s\nPlainText Two: %s\n\none^two: ", pass, key);
-    // for(int i = 0 ; i < len; ++i) {
-    //     sprintf(cipher + i*sizeof(char), "%02x", cookie[i]);
-    // }
-
-    // for(int i = 0 ; i < len; ++i) {
-    //     printf("%02X ", cookie[i]);
-    // }
-    // printf("\ncipher = %s\n", (char *)cipher);
-    // for(int i = 0 ; i < len; ++i) {
-    //     printf("%c ", (int)(cipher + sizeof(char)));
-    // }
-    // for(int i = 0; i < len ; ++i)
-    //     pass_from_cipher[i]
     printf("\n");
 }
 
@@ -366,9 +359,10 @@ void set_home_dir() {
 }
 
 void httpRequest(int sock, char *request) {
+    printf("%s\n", request);
     set_home_dir();
     if (get_req_type(request) == GET) {
-        char path[SIZE/2] = {0};
+        char path[SIZE] = {0};
         get_path_from_http(request, path);
         check_expect_100(request);
         printf("\tpath = %s\n", path);
@@ -378,19 +372,25 @@ void httpRequest(int sock, char *request) {
         char user[USERMAX + 1] = {0};
         char pass[PASSMAX + 1] = {0};
         char cookie[PASSMAX + strlen("\r\n") + 1];
-        char path[SIZE/2] = {0};
+        char path[SIZE] = {0};
         char content[BYTES] = {0};
-        get_content_from_http(request, content);
-        user_pass_from_http(content, user, pass);
-        verify_user(user, pass);
-        set_cookie(user, pass, cookie);
-        send_http_cookie(sock, cookie);
-        printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
-        set_content_length(request);
-        check_expect_100(request);
-        printf("\tpath = %s\n", path);
-        write_file_to(sock, path, content);
+        if (strlen(path) > 1 && verify(request, path, cookie)) {
+            get_content_from_http(request, content);
+            printf("\tcontent = %s\n", content);
+            set_content_length(request);
+            check_expect_100(request);
+            printf("\tpath = %s\n", path);
+            write_file_to(sock, path, content);
+        }
+        else if (get_user_pass_from_http(content, user, pass) == VALID
+            && verify_user(user, pass) == VALID) {
+                set_cookie(user, pass, cookie);
+                send_http_cookie(sock, cookie);
+        }
+        else {
+            send_http_response(sock, FORBIDDEN);
+        }
     }
     else
         send_http_response(sock, BADREQ);
