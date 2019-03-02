@@ -224,7 +224,7 @@ void user_pass_from_http(const char *content, char *user, char *pass) {
     char orig_content[SIZE];
     strncpy(orig_content, content, SIZE);
     char *token = strtok(orig_content, "&");
-    printf("token %s\n", token);
+    // printf("token %s\n", token);
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
