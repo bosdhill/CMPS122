@@ -65,25 +65,27 @@ static void binary(int sock, char *fname) {
 int create_file_named(const char *fname, char content[], int sock) {
     printf("create_file_named\n");
     int fd;
-    int flags = (O_RDWR | O_CREAT | O_TRUNC);
+    int flags = O_RDWR | O_CREAT | O_TRUNC;
+    if (EXPECT) flags |= O_APPEND;
     printf("\tfname = %s\n", fname);
     if ((fd = open(fname, flags, umask_0)) != -1) {
         write(fd, content, BYTES);
         if (EXPECT == 1) {
             printf("\tHTTP/1.1 100-continue\r\n");
             int recv_bytes;
-            char response[BYTES] = {0};
+            char response[content_length];
+            memset(response, '\0', content_length);
             send_http_response(sock, CONTINUE);
             recv_bytes = recv(sock, (void *)response, content_length, 0);
             write(fd, response, content_length);
-            printf("received: \n%s\n", response);
+            printf("received: \n%s\n", (char *)response);
             content_length -= recv_bytes;
             printf("bytes left: %d\n", content_length);
         }
         EXPECT = 0;
         content_length = 0;
         close(fd);
-        printf("gets here?\n");
+        // printf("gets here?\n");
         return 1;
     }
     return -1;
@@ -210,7 +212,7 @@ void write_file_to(int sock, const char path[], char content[]) {
         send_http_response(sock, BADREQ);
     else
         send_http_response(sock, SUCCESS);
-    printf("huh??");
+    // printf("huh??");
     printf("pwd: %s\n",getcwd(NULL,SIZE));
     chdir(homedir);
 }
