@@ -242,8 +242,6 @@ int verify_user(const char *user, const char *pass) {
         next_user = strtok(line, ":");
         next_pass = strtok(NULL, ":");
         next_pass[strcspn(next_pass, "\n")] = 0; //removes newline
-        printf("\tnext_user = %s", next_user);
-        printf(", next_pass = %s\n", next_pass);
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
             printf("VALID!\n");
             return VALID;
