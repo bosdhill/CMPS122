@@ -240,8 +240,6 @@ int get_user_pass_from_http(const char *content, char *user, char *pass) {
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
-    printf("\tuser = %s\n", user);
-    printf("\tpass = %s\n", pass);
     return 1;
 }
 
@@ -267,7 +265,6 @@ int verify_user(const char *user, const char *pass) {
         next_pass = strtok(NULL, ":");
         next_pass[strcspn(next_pass, "\n")] = 0; //removes newline
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
-            printf("VALID!\n");
             return VALID;
         }
     }
@@ -291,8 +288,6 @@ void get_path_from_http(const char *request, char path[]) {
     strncpy(orig_request, request, SIZE);
     strtok(orig_request, " ");
     strcpy(path, strtok(NULL, " "));
-    printf("\tpath = %s\n", path);
-    printf("\tlen of path = %d\n", strlen(path));
 }
 
 void get_content_from_http(const char *request, char content[]) {
@@ -367,10 +362,14 @@ void httpRequest(int sock, char *request) {
     set_home_dir();
     if (get_req_type(request) == GET) {
         char path[SIZE] = {0};
+        char cookie[PASSMAX + strlen("\r\n") + 1];
         get_path_from_http(request, path);
-        check_expect_100(request);
-        printf("\tpath = %s\n", path);
-        send_file_to(sock, path);
+        if (strlen(path) > 1 && verify(request, path, cookie)) {
+            printf("\tpath = %s\n", path);
+            send_file_to(sock, path);
+        }
+        else
+            send_http_response(sock, FORBIDDEN);
     }
     else if (get_req_type(request) == POST) {
         char user[USERMAX + 1] = {0};
@@ -398,4 +397,5 @@ void httpRequest(int sock, char *request) {
     }
     else
         send_http_response(sock, BADREQ);
+    close(sock);
 }
