@@ -232,19 +232,27 @@ void user_pass_from_http(const char *content, char *user, char *pass) {
     printf("pass = %s\n", pass);
 }
 
-void verify_user(char *user, char *pass) {
-    char const* const fileName = "users"; /* should check that argc > 1 */
-    FILE* file = fopen(fileName, "r"); /* should check the result */
+int verify_user(const char *user, const char *pass) {
+    printf("verify_user\n");
+    FILE* file = fopen("users", "r");
     char line[USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1];
-
+    char *next_user = NULL;
+    char *next_pass = NULL;
     while (fgets(line, sizeof(line), file)) {
-        /* note that fgets don't strip the terminating \n, checking its
-           presence would allow to handle lines longer that sizeof(line) */
-        printf("%s", line);
+        next_user = strtok(line, ":");
+        next_pass = strtok(NULL, ":");
+        next_pass[strcspn(next_pass, "\n")] = 0; //removes newline
+        printf("\tnext_user = %s", next_user);
+        printf(", next_pass = %s\n", next_pass);
+        if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
+            printf("VALID!\n");
+            return VALID;
+        }
     }
     /* may check feof here to make a difference between eof and io failure -- network
        timeout for instance */
     fclose(file);
+    return INVALID;
     exit(1);
 }
 
