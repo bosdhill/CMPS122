@@ -166,12 +166,13 @@ void send_file_to(int sock, char path[]) {
 }
 
 // pre-cond: at least one directory since root exists
-void create_directory_path_from(const char path[], char dir_path[]) {
+int create_directory_path_from(const char path[], char dir_path[]) {
     printf("create_directory_path_from\n");
     char orig_path[SIZE];
     strncpy(orig_path, path, SIZE);
     char *delim = "/";
     char *token = strtok(orig_path, delim);
+    if (token == NULL) return INVALID;
     do {
         strncat(dir_path, token, SIZE);
         strncat(dir_path, delim, SIZE);
@@ -179,6 +180,7 @@ void create_directory_path_from(const char path[], char dir_path[]) {
         mkdir(dir_path, umask_0);
     } while((token = strtok(NULL, delim)) != NULL);
     printf("\tdir_path is now %s\n", dir_path);
+    return VALID;
 }
 
 void get_path_to_file_and_filename(const char *path, char file[], char file_path[]) {
@@ -216,7 +218,8 @@ void write_file_to(int sock, const char path[], char content[]) {
     printf("\tfile name = %s\n", fname);
     printf("\tpath to file = %s\n", path_to_file);
     printf("\tpath = %s\n", path);
-    create_directory_path_from(path_to_file, dir_path);
+    if (create_directory_path_from(path_to_file, dir_path) == INVALID)
+        send_http_response(sock, BADREQ);
     strncat(absolute_file_path, homedir, strlen(homedir) + 1);
     strncat(absolute_file_path, path, strlen(path) + 1);
     printf("absolute = %s\n", absolute_file_path);
@@ -235,12 +238,14 @@ int get_user_pass_from_http(const char *content, char *user, char *pass) {
     char orig_content[SIZE];
     strncpy(orig_content, content, SIZE);
     char *token = strtok(orig_content, "&");
-    if (token == NULL) return -1;
+    if (token == NULL) return INVALID;
     // printf("token %s\n", token);
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
-    return 1;
+    printf("\tpass=%s\n", pass);
+    printf("\tuser=%s\n", user);
+    return VALID;
 }
 
 void get_user_from_path(const char *path, char user[]) {
@@ -378,6 +383,7 @@ void httpRequest(int sock, char *request) {
         char path[SIZE] = {0};
         char content[BYTES] = {0};
         get_path_from_http(request, path);
+        // get_content_from_http(request, content);
         if (verify(request, path, cookie)) {
             get_content_from_http(request, content);
             printf("\tcontent = %s\n", content);
@@ -386,13 +392,16 @@ void httpRequest(int sock, char *request) {
             printf("\tpath = %s\n", path);
             write_file_to(sock, path, content);
         }
-        else if (get_user_pass_from_http(content, user, pass) == VALID
-            && verify_user(user, pass) == VALID) {
+        else {
+            get_content_from_http(request, content);
+            if (get_user_pass_from_http(content, user, pass) == VALID
+                && verify_user(user, pass) == VALID) {
                 set_cookie(user, pass, cookie);
                 send_http_cookie(sock, cookie);
-        }
-        else {
-            send_http_response(sock, FORBIDDEN);
+            }
+            else {
+                send_http_response(sock, FORBIDDEN);
+            }
         }
     }
     else
