@@ -314,7 +314,7 @@ int get_cookie_from_http(const char *request, char cookie[]) {
 }
 
 int verify(const char *request, const char *path, char cookie[]) {
-    return get_cookie_from_http(request, cookie) == VALID
+    return strlen(path) > 1 && get_cookie_from_http(request, cookie) == VALID
             && verify_cookie(path, cookie) == VALID;
 }
 
@@ -364,7 +364,7 @@ void httpRequest(int sock, char *request) {
         char path[SIZE] = {0};
         char cookie[PASSMAX + strlen("\r\n") + 1];
         get_path_from_http(request, path);
-        if (strlen(path) > 1 && verify(request, path, cookie)) {
+        if (verify(request, path, cookie)) {
             printf("\tpath = %s\n", path);
             send_file_to(sock, path);
         }
@@ -378,7 +378,7 @@ void httpRequest(int sock, char *request) {
         char path[SIZE] = {0};
         char content[BYTES] = {0};
         get_path_from_http(request, path);
-        if (strlen(path) > 1 && verify(request, path, cookie)) {
+        if (verify(request, path, cookie)) {
             get_content_from_http(request, content);
             printf("\tcontent = %s\n", content);
             set_content_length(request);
