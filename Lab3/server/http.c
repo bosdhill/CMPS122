@@ -27,6 +27,7 @@ char SUCCESS[] = "HTTP/1.1 200 OK\r\n\r\n";
 char NOTFOUND[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 char FORBIDDEN[] = "HTTP/1.1 401 Forbidden\r\n\r\n";
+char COOKIE[] = "HTTP/1.1 200 OK\r\nSet-Cookie: ";
 char CONTINUE[] = "HTTP/1.1 100-continue\r\n";
 unsigned char EXPECT = 0;
 int content_length = 0;
@@ -54,6 +55,15 @@ void send_http_response(int sock, char status[]) {
     if (send(sock, (void *)status, strlen(status) + 1,0) == -1) {
         perror("send");
     }
+}
+
+void send_http_cookie(int sock, char cookie[]) {
+    printf("send_http_cookie\n");
+    strcat(cookie, "\r\n");
+    send(sock, (void *)COOKIE, strlen(COOKIE) + 1,0);
+    send(sock, (void *)cookie, strlen(cookie) + 1,0);
+    printf("\tsending code: %s\n", cookie);
+    exit(1);
 }
 
 // writes out file to sock
@@ -344,7 +354,6 @@ void set_cookie(const char *user, const char *pass, char cookie[]) {
     // for(int i = 0; i < len ; ++i)
     //     pass_from_cipher[i]
     printf("\n");
-    exit(1);
 }
 
 void check_expect_100(char *request) {
@@ -368,13 +377,14 @@ void httpRequest(int sock, char *request) {
     else if (get_req_type(request) == POST) {
         char user[USERMAX + 1] = {0};
         char pass[PASSMAX + 1] = {0};
-        char cookie[PASSMAX + 1] = {0};
+        char cookie[PASSMAX + strlen("\r\n") + 1];
         char path[SIZE/2] = {0};
         char content[BYTES] = {0};
         get_content_from_http(request, content);
         user_pass_from_http(content, user, pass);
         verify_user(user, pass);
         set_cookie(user, pass, cookie);
+        send_http_cookie(sock, cookie);
         printf("\tcontent = %s\n", content);
         get_path_from_http(request, path);
         set_content_length(request);
