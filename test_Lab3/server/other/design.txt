@@ -1,0 +1,36 @@
+Phase I:
+GET preconditions:
+	1. File must exist
+	2. Can't request a directory
+POST preconditions:
+	1. Can't create same file in location twice
+
+enum	ERROR, GET
+
+httpRequest
+	receive request
+	call parse(first) -> TYPE, pathname or ERROR
+	if ERROR
+		return 404
+	if TYPE == GET
+		call handleGET(pathname) -> status
+	if TYPE == POST
+		call parse(GET) -> content, length
+		call handlePOST(pathname, content, length) -> status
+	return status
+
+Phase II.
+
+Requests:
+
+auth get:
+curl -v -H "Cookie: cookie=n9wu%#rr2" "http://localhost:4200/Bob/dir/test"
+
+post to get cookie:
+curl -v -d "login?username=Bob&password=n9wu%#rr2" "http://localhost:4325/"
+
+
+make post with cookie:
+curl -v -H "Cookie: cookie=n9wu%#rr2" -d "beep boop" "http://localhost:4325/"
+
+curl -v -H "Cookie: cookie=n9wu%#rr2" "http://localhost:4321/"
