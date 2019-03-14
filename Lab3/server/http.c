@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Bobby Dhillon - All Rights Reserved.
+ * Copyright (C) David C. Harrison - All Rights Reserved.
  * You may not use, distribute, or modify this code without
  * the express written permission of the copyright holder.
  */
@@ -83,19 +83,6 @@ int create_file_named(const char *fname, char content[], int sock) {
         return 1;
     }
     return -1;
-}
-
-void get_file_name_from(const char path[], char file_name[]) {
-    char orig_path[SIZE];
-    strncpy(orig_path, path, SIZE);
-    char *delim = "/";
-    char *token = strtok(orig_path, delim);
-    char *prev = NULL;
-    do {
-        prev = token;
-        token = strtok(NULL, delim);
-    } while (token != NULL);
-    strncpy(file_name, prev, SIZE);
 }
 
 void get_path_to_file(const char path[], char file_path[]) {
@@ -321,7 +308,7 @@ void httpRequest(int sock, char *request) {
         }
         else {
             get_content_from_http(request, content);
-            if (get_user_pass_from_http(content, user, pass) == VALID
+            if (get_user_pass_from_http(path, user, pass) == VALID
                 && verify_user(user, pass) == VALID) {
                 set_cookie(user, pass, cookie);
                 send_http_cookie(sock, cookie);
