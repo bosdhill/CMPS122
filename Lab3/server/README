@@ -1,0 +1,6 @@
+1. To login:
+	curl POST "http://localhost:4200/login?username=<user>&password=<pass>"
+2. To send files:
+	curl POST -H "Cookie: cookie=<token>" -d "data" "http://localhost:4200/<user>/path/to/file"
+3. To get files:
+	curl GET -H "Cookie: cookie=<token>" "http://localhost:4200/<user>/path/to/file"
