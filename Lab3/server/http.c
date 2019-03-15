@@ -323,9 +323,8 @@ void httpRequest(int sock, char *request) {
             else
                 send_http_response(sock, FORBIDDEN);
         }
-        else {
+        else
             send_http_response(sock, BADREQ);
-        }
     }
     else
         send_http_response(sock, BADREQ);
