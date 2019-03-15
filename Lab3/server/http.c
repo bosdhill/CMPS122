@@ -21,7 +21,7 @@
 #define SIZE 512
 #define USERMAX 30
 #define PASSMAX 30
-#define MAX_USERS 50
+#define MAX_USERS 100
 #define LINE_LEN USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1
 
 enum req_type{POST, GET, NONE};
@@ -209,6 +209,26 @@ void get_user_from_path(const char *path, char user[]) {
     strncpy(user, token, USERMAX + 1);
 }
 
+void read_in_keys() {
+    FILE* file = fopen("keys", "r");
+    if (file == NULL) return;
+    char line[LINE_LEN];
+    int i = 0;
+    while (fgets(line, sizeof(line), file) && i < MAX_USERS) {
+        line[strcspn(line, "\n")] = 0;
+        strncpy(keys[i], line, LINE_LEN);
+        i++;
+    }
+    num_keys = i;
+    fclose(file);
+}
+
+void write_out_key() {
+    FILE* file = fopen("keys", "a");
+    fprintf(file, "%s\n", keys[num_keys - 1]);
+    fclose(file);
+}
+
 int authenticate_user(const char *user, const char *cookie) {
     printf("in auth\n");
     FILE* file = fopen("users", "r");
@@ -381,6 +401,7 @@ void set_home_dir() {
 void httpRequest(int sock, char *request) {
     SOCK = sock;
     set_home_dir();
+    read_in_keys();
     if (get_req_type(request) == GET) {
         char path[SIZE];
         char cookie[PASSMAX + strlen("\r\n") + 1];
@@ -415,16 +436,17 @@ void httpRequest(int sock, char *request) {
             }
             else if (get_user_pass_from_http(path, user, pass) == VALID
                     && verify_user(user, pass) == VALID) {
-                    // printf("user = %s\n", user);
-                    // printf("pass = %s\n", pass);
+                    printf("user = %s\n", user);
+                    printf("pass = %s\n", pass);
                     strncat(line, user, USERMAX);
                     strncat(line, ":", 1);
                     strncat(line, pass, PASSMAX);
                     printf("line: %s\n", line);
                     set_cookie(user, pass, cookie);
                     encrypt_username(line, cookie);
-                    // printf("smashing?\n");
+                    printf("smashing?\n");
                     send_http_cookie(sock, cookie);
+                    write_out_key();
             }
             else
                 send_http_response(sock, FORBIDDEN);
