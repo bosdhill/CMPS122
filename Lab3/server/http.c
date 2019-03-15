@@ -270,7 +270,7 @@ void get_path_from_http(const char *request, char path[]) {
     strcpy(path, strtok(NULL, " "));
 }
 
-int cipher_textid_path(const char *path) {
+int valid_path(const char *path) {
     char orig_path[SIZE];
     strncpy(orig_path, path, SIZE);
     return strlen(orig_path) > 1 && strstr(orig_path, "..") == NULL;
