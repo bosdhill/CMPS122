@@ -224,7 +224,9 @@ int authenticate_user(const char *user, const char *cookie) {
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0) {
             orig_line[strcspn(orig_line, "\n")] = 0;
-            for (int i = 0; i < MAX_USERS; i++) {
+            printf("testing %s\n", orig_line);
+            for (int i = 0; i < num_keys; i++) {
+                printf("with key: %s\n", keys[i]);
                 if (strlen(cookie) == strlen(keys[i])) {
                     for (int j = 0; j < strlen(cookie); j++) {
                         msg[j] = cookie[j] ^ keys[i][j];
@@ -267,6 +269,7 @@ void encrypt_username(const char *line, char cookie[]) {
     }
     // printf("\nkey: %s", key);
     memcpy(keys[num_keys++], key, N);
+    printf("key saved as %s\n", keys[num_keys - 1]);
 
     printf("\ncipher text: %s", cipher_text);
     for (int i = 0; i < N; i++) {
@@ -274,7 +277,6 @@ void encrypt_username(const char *line, char cookie[]) {
     }
     printf("\nmessage: %s\n", msg);
     strncpy(cookie, cipher_text, LINE_LEN);
-    printf("stack smassshed\n");
 }
 
 int verify_user(const char *user, const char *pass) {
@@ -302,6 +304,7 @@ int verify_user(const char *user, const char *pass) {
 int verify_cookie(const char *path, const char *cookie) {
     char user[USERMAX + 1];
     get_user_from_path(path, user);
+    printf("user: %s\n", user);
     // return verify_user(user, cookie);
     return authenticate_user(user, cookie);
 }
@@ -398,12 +401,10 @@ void httpRequest(int sock, char *request) {
         memset(line, '\0', LINE_LEN);
 
         get_path_from_http(request, path);
-        printf("path = %s\n", path);
         if (valid_path(path)) {
-            printf("path = %s\n", path);
             if (get_cookie_from_http(request, cookie) == VALID) {
                 if (verify_cookie(path, cookie) == VALID) {
-
+                    printf("its verified?");
                 }
                 printf("path = %s\n", path);
                 printf("cookie = %s\n", cookie);
