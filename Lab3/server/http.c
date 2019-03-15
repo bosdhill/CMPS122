@@ -21,7 +21,7 @@
 #define SIZE 512
 #define USERMAX 30
 #define PASSMAX 30
-#define MAX_USERS 2000
+#define MAX_USERS 50
 #define LINE_LEN USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1
 
 enum req_type{POST, GET, NONE};
@@ -54,6 +54,7 @@ void send_http_response(int sock, char status[]) {
 }
 
 void send_http_cookie(int sock, char cookie[]) {
+    printf("send_http!\n");
     strcat(cookie, "\r\n");
     send(sock, (void *)COOKIE, strlen(COOKIE) + 1,0);
     send(sock, (void *)cookie, strlen(cookie) + 1,0);
@@ -71,8 +72,8 @@ static void binary(int sock, char *fname) {
 }
 
 int is_printable(int character) {
-    if ((character >= 40 && character <= 126)
-        || (character >= 129 && character <= 169))
+    if ((character >= 40 && character <= 126 && character != 96)
+        || (character >= 129 && character <= 169 ))
         return VALID;
     return INVALID;
 }
@@ -190,7 +191,7 @@ void write_file_to(int sock, const char path[], char content[]) {
     chdir(homedir);
 }
 
-int get_user_pass_from_http(const char *content, char *user, char *pass) {
+int get_user_pass_from_http(const char *content, char user[], char pass[]) {
     char orig_content[SIZE];
     strncpy(orig_content, content, SIZE);
     char *token = strtok(orig_content, "&");
@@ -208,7 +209,8 @@ void get_user_from_path(const char *path, char user[]) {
     strncpy(user, token, USERMAX + 1);
 }
 
-int find_user_in_file(const char *user, const char *cookie) {
+int authenticate_user(const char *user, const char *cookie) {
+    printf("in auth\n");
     FILE* file = fopen("users", "r");
     char line[LINE_LEN];
     char orig_line[LINE_LEN];
@@ -242,6 +244,7 @@ int find_user_in_file(const char *user, const char *cookie) {
 }
 
 void encrypt_username(const char *line, char cookie[]) {
+
     char orig_line[LINE_LEN];
     strncpy(orig_line, line, LINE_LEN);
     int N = strlen(line);
@@ -270,6 +273,8 @@ void encrypt_username(const char *line, char cookie[]) {
         msg[i] = cipher_text[i] ^ key[i];
     }
     printf("\nmessage: %s\n", msg);
+    strncpy(cookie, cipher_text, LINE_LEN);
+    printf("stack smassshed\n");
 }
 
 int verify_user(const char *user, const char *pass) {
@@ -285,8 +290,8 @@ int verify_user(const char *user, const char *pass) {
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
             orig_line[strcspn(orig_line, "\n")] = 0;
-            char cookie[50];
-            encrypt_username(orig_line, cookie);
+            // char cookie[50];
+            // encrypt_username(orig_line, cookie);
             return VALID;
         }
     }
@@ -297,7 +302,8 @@ int verify_user(const char *user, const char *pass) {
 int verify_cookie(const char *path, const char *cookie) {
     char user[USERMAX + 1];
     get_user_from_path(path, user);
-    return verify_user(user, cookie);
+    // return verify_user(user, cookie);
+    return authenticate_user(user, cookie);
 }
 
 void get_path_from_http(const char *request, char path[]) {
@@ -385,14 +391,22 @@ void httpRequest(int sock, char *request) {
     else if (get_req_type(request) == POST) {
         char user[USERMAX + 1];
         char pass[PASSMAX + 1];
-        char cookie[PASSMAX + strlen("\r\n") + 1];
+        char cookie[LINE_LEN + strlen("\r\n") + 1];
         char path[SIZE];
         char content[BYTES];
+        char line[LINE_LEN];
+        memset(line, '\0', LINE_LEN);
 
         get_path_from_http(request, path);
+        printf("path = %s\n", path);
         if (valid_path(path)) {
-            if (get_cookie_from_http(request, cookie) == VALID
-                && verify_cookie(path, cookie) == VALID) {
+            printf("path = %s\n", path);
+            if (get_cookie_from_http(request, cookie) == VALID) {
+                if (verify_cookie(path, cookie) == VALID) {
+
+                }
+                printf("path = %s\n", path);
+                printf("cookie = %s\n", cookie);
                     get_content_from_http(request, content);
                     set_content_length(request);
                     check_expect_100(request);
@@ -400,7 +414,15 @@ void httpRequest(int sock, char *request) {
             }
             else if (get_user_pass_from_http(path, user, pass) == VALID
                     && verify_user(user, pass) == VALID) {
+                    // printf("user = %s\n", user);
+                    // printf("pass = %s\n", pass);
+                    strncat(line, user, USERMAX);
+                    strncat(line, ":", 1);
+                    strncat(line, pass, PASSMAX);
+                    printf("line: %s\n", line);
                     set_cookie(user, pass, cookie);
+                    encrypt_username(line, cookie);
+                    // printf("smashing?\n");
                     send_http_cookie(sock, cookie);
             }
             else
