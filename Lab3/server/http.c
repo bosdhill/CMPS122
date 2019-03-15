@@ -21,7 +21,7 @@
 #define SIZE 512
 #define USERMAX 30
 #define PASSMAX 30
-#define MAX_USERS 50
+#define MAX_USERS 2000
 #define LINE_LEN USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1
 
 enum req_type{POST, GET, NONE};
@@ -75,64 +75,6 @@ int is_printable(int character) {
         || (character >= 129 && character <= 169))
         return VALID;
     return INVALID;
-}
-
-void encrypt_username(const char *line) {
-    int N = strlen(line);
-    char cipher_text[N];
-    char key[N];
-    char msg[N];
-    printf("\nmessage: ");
-    srand(time(NULL));
-    // initial key
-    for (int i = 0; i < N; i++) {
-        key[i] = (unsigned char)(1 + rand() % 100);
-    }
-    // adjust key and encrypt_username
-    for (int i = 0; i < N; i++) {
-        printf("%c", line[i]);
-        while (!is_printable(line[i] ^ key[i])) {
-            key[i] = (unsigned char)(1 + rand() % 100);
-        }
-        cipher_text[i] = line[i] ^ key[i];
-    }
-    printf("\nkey: %s", key);
-    memcpy(keys[num_keys++], key, N);
-
-    printf("%d", (unsigned char)key[N - 1]);
-
-    printf("\ncipher text: ");
-    for (int i = 0; i < N - 1; i++) {
-        printf("%d.", (unsigned char)cipher_text[i]);
-    }
-    printf("%d", (unsigned char)cipher_text[N - 1]);
-
-    printf("\ncipher text: %s", cipher_text);
-    for (int i = 0; i < N; i++) {
-        msg[i] = cipher_text[i] ^ key[i];
-    }
-    printf("\nmessage: %s\n", msg);
-
-
-    // printf("there are %d characters\n", count);
-    // char m[count];
-    // char *end;
-    // int i = 0;
-    // token = strtok(_s, ".");
-    // m[i] = strtol(token, &end, 10);
-    // end = NULL;
-    // i++;
-    // while (token != NULL) {
-    //     token = strtok(NULL, ".");
-    //     m[i] = strtol(token, &end, 10);
-    //     end = NULL;
-    //     i++;
-    // }
-    // printf("\npreserved: ");
-    // for (int i = 0; i < count; i++) {
-    //     printf("%d.",m[i]);
-    // }
-
 }
 
 int create_file_named(const char *fname, char content[], int sock) {
@@ -266,6 +208,70 @@ void get_user_from_path(const char *path, char user[]) {
     strncpy(user, token, USERMAX + 1);
 }
 
+int find_user_in_file(const char *user, const char *cookie) {
+    FILE* file = fopen("users", "r");
+    char line[LINE_LEN];
+    char orig_line[LINE_LEN];
+    char msg[LINE_LEN];
+    char *next_user = NULL;
+    char *next_pass = NULL;
+    while (fgets(line, sizeof(line), file)) {
+        strncpy(orig_line, line, LINE_LEN);
+        next_user = strtok(line, ":");
+        next_pass = strtok(NULL, ":");
+        next_pass[strcspn(next_pass, "\n")] = 0;
+        if (strcmp(next_user, user) == 0) {
+            orig_line[strcspn(orig_line, "\n")] = 0;
+            for (int i = 0; i < MAX_USERS; i++) {
+                if (strlen(cookie) == strlen(keys[i])) {
+                    for (int j = 0; j < strlen(cookie); j++) {
+                        msg[j] = cookie[j] ^ keys[i][j];
+                    }
+                    printf("msg = %s, line = %s\n", msg, line);
+                    if (strcmp(msg, orig_line) == 0) {
+                        printf("User: %s is authenticated\n", user);
+                        return VALID;
+                    }
+                }
+
+            }
+        }
+    }
+    fclose(file);
+    return INVALID;
+}
+
+void encrypt_username(const char *line, char cookie[]) {
+    char orig_line[LINE_LEN];
+    strncpy(orig_line, line, LINE_LEN);
+    int N = strlen(line);
+    char cipher_text[N];
+    char key[N];
+    char msg[N];
+    printf("\nmessage: ");
+    srand(time(NULL));
+    // initial key
+    for (int i = 0; i < N; i++) {
+        key[i] = (unsigned char)(1 + rand() % 100);
+    }
+    // adjust key and encrypt_username
+    for (int i = 0; i < N; i++) {
+        printf("%c", line[i]);
+        while (!is_printable(line[i] ^ key[i])) {
+            key[i] = (unsigned char)(1 + rand() % 100);
+        }
+        cipher_text[i] = line[i] ^ key[i];
+    }
+    // printf("\nkey: %s", key);
+    memcpy(keys[num_keys++], key, N);
+
+    printf("\ncipher text: %s", cipher_text);
+    for (int i = 0; i < N; i++) {
+        msg[i] = cipher_text[i] ^ key[i];
+    }
+    printf("\nmessage: %s\n", msg);
+}
+
 int verify_user(const char *user, const char *pass) {
     FILE* file = fopen("users", "r");
     char line[LINE_LEN];
@@ -279,7 +285,8 @@ int verify_user(const char *user, const char *pass) {
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
             orig_line[strcspn(orig_line, "\n")] = 0;
-            encrypt_username(orig_line);
+            char cookie[50];
+            encrypt_username(orig_line, cookie);
             return VALID;
         }
     }
@@ -404,7 +411,5 @@ void httpRequest(int sock, char *request) {
     }
     else
         send_http_response(sock, BADREQ);
-
-    printf("key!! %d\n", strlen(keys[0]));
     close(sock);
 }
