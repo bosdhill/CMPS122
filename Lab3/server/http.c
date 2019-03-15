@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
 
 #define BYTES 2048
 #define VALID 1
@@ -21,6 +22,7 @@
 #define USERMAX 30
 #define PASSMAX 30
 #define MAX_USERS 50
+#define LINE_LEN USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1
 
 enum req_type{POST, GET, NONE};
 char homedir[SIZE/2] = {0};
@@ -30,10 +32,12 @@ char BADREQ[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
 char FORBIDDEN[] = "HTTP/1.1 401 Forbidden\r\n\r\n";
 char COOKIE[] = "HTTP/1.1 200 OK\r\nSet-Cookie: ";
 char CONTINUE[] = "HTTP/1.1 100-continue\r\n";
-char *keys[MAX_USERS];
+char keys[MAX_USERS][63];
+int num_keys = 0;
 unsigned char EXPECT = 0;
 int content_length = 0;
 mode_t umask_0 = 0777;
+int SOCK;
 
 // https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int is_regular_file(const char *path)
@@ -66,45 +70,69 @@ static void binary(int sock, char *fname) {
    }
 }
 
-void hash(const char *user, const char *pass) {
-    int K = strlen(pass);
-    int M = strlen(user);
-    unsigned char cipher_text[M + K];
-    unsigned char key[M + K];
-    int cnt = 0;
-    printf("\nmessage\n");
-    for (int i = 0; i < M + K; i++) {
+int is_printable(int character) {
+    if ((character >= 40 && character <= 126)
+        || (character >= 129 && character <= 169))
+        return VALID;
+    return INVALID;
+}
+
+void encrypt_username(const char *line) {
+    int N = strlen(line);
+    char cipher_text[N];
+    char key[N];
+    char msg[N];
+    printf("\nmessage: ");
+    srand(time(NULL));
+    // initial key
+    for (int i = 0; i < N; i++) {
         key[i] = (unsigned char)(1 + rand() % 100);
     }
-    for (int i = 0; i < M; i++) {
-        printf("%d ", user[i]);
-        cipher_text[cnt] = user[i] ^ key[cnt];
-        cnt++;
+    // adjust key and encrypt_username
+    for (int i = 0; i < N; i++) {
+        printf("%c", line[i]);
+        while (!is_printable(line[i] ^ key[i])) {
+            key[i] = (unsigned char)(1 + rand() % 100);
+        }
+        cipher_text[i] = line[i] ^ key[i];
     }
-    for (int i = 0; i < K; i++) {
-        printf("%d ", pass[i]);
-        cipher_text[cnt] = pass[i] ^ key[cnt];
-        cnt++;
-    }
-    printf("\nkey\n");
-    for (int i = 0; i < M + K; i++) {
-        printf("%d ", key[i]);
-    }
+    printf("\nkey: %s", key);
+    memcpy(keys[num_keys++], key, N);
 
-    printf("\ncipher text\n");
-    for (int i = 0; i < M + K; i++) {
-        printf("%d ", cipher_text[i]);
-    }
+    printf("%d", (unsigned char)key[N - 1]);
 
-    printf("\nmessage\n");
-
-    for (int i = 0; i < M + K; i++) {
-        cipher_text[i] = cipher_text[i] ^ key[i];
+    printf("\ncipher text: ");
+    for (int i = 0; i < N - 1; i++) {
+        printf("%d.", (unsigned char)cipher_text[i]);
     }
+    printf("%d", (unsigned char)cipher_text[N - 1]);
 
-    for (int i = 0; i < M + K; i++) {
-        printf("%c ", (unsigned char)cipher_text[i]);
+    printf("\ncipher text: %s", cipher_text);
+    for (int i = 0; i < N; i++) {
+        msg[i] = cipher_text[i] ^ key[i];
     }
+    printf("\nmessage: %s\n", msg);
+
+
+    // printf("there are %d characters\n", count);
+    // char m[count];
+    // char *end;
+    // int i = 0;
+    // token = strtok(_s, ".");
+    // m[i] = strtol(token, &end, 10);
+    // end = NULL;
+    // i++;
+    // while (token != NULL) {
+    //     token = strtok(NULL, ".");
+    //     m[i] = strtol(token, &end, 10);
+    //     end = NULL;
+    //     i++;
+    // }
+    // printf("\npreserved: ");
+    // for (int i = 0; i < count; i++) {
+    //     printf("%d.",m[i]);
+    // }
+
 }
 
 int create_file_named(const char *fname, char content[], int sock) {
@@ -228,7 +256,6 @@ int get_user_pass_from_http(const char *content, char *user, char *pass) {
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
     strncpy(pass, strstr(token, "password=") + strlen("password="), PASSMAX);
-    hash(user, pass);
     return VALID;
 }
 
@@ -241,15 +268,18 @@ void get_user_from_path(const char *path, char user[]) {
 
 int verify_user(const char *user, const char *pass) {
     FILE* file = fopen("users", "r");
-    char line[USERMAX + PASSMAX + strlen(":") + strlen("\n") + 1];
+    char line[LINE_LEN];
+    char orig_line[LINE_LEN];
     char *next_user = NULL;
     char *next_pass = NULL;
     while (fgets(line, sizeof(line), file)) {
+        strncpy(orig_line, line, LINE_LEN);
         next_user = strtok(line, ":");
         next_pass = strtok(NULL, ":");
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
-            hash(line);
+            orig_line[strcspn(orig_line, "\n")] = 0;
+            encrypt_username(orig_line);
             return VALID;
         }
     }
@@ -333,6 +363,7 @@ void set_home_dir() {
 }
 
 void httpRequest(int sock, char *request) {
+    SOCK = sock;
     set_home_dir();
     if (get_req_type(request) == GET) {
         char path[SIZE];
@@ -373,5 +404,7 @@ void httpRequest(int sock, char *request) {
     }
     else
         send_http_response(sock, BADREQ);
+
+    printf("key!! %d\n", strlen(keys[0]));
     close(sock);
 }
