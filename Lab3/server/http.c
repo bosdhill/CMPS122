@@ -225,6 +225,12 @@ void get_path_from_http(const char *request, char path[]) {
     strcpy(path, strtok(NULL, " "));
 }
 
+int valid_path(const char *path) {
+    char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
+    return strlen(orig_path) > 1 && strstr(orig_path, "..") == NULL;
+}
+
 void get_content_from_http(const char *request, char content[]) {
     char* end = strstr(request, "\r\n\r\n");
     if (end == NULL) {
@@ -284,38 +290,41 @@ void set_home_dir() {
 void httpRequest(int sock, char *request) {
     set_home_dir();
     if (get_req_type(request) == GET) {
-        char path[SIZE] = {0};
+        char path[SIZE];
         char cookie[PASSMAX + strlen("\r\n") + 1];
         get_path_from_http(request, path);
-        if (verify(request, path, cookie)) {
+        if (valid_path(path) && verify(request, path, cookie)) {
             send_file_to(sock, path);
         }
         else
             send_http_response(sock, FORBIDDEN);
     }
     else if (get_req_type(request) == POST) {
-        char user[USERMAX + 1] = {0};
-        char pass[PASSMAX + 1] = {0};
+        char user[USERMAX + 1];
+        char pass[PASSMAX + 1];
         char cookie[PASSMAX + strlen("\r\n") + 1];
-        char path[SIZE] = {0};
-        char content[BYTES] = {0};
+        char path[SIZE];
+        char content[BYTES];
+
         get_path_from_http(request, path);
-        if (verify(request, path, cookie)) {
-            get_content_from_http(request, content);
-            set_content_length(request);
-            check_expect_100(request);
-            write_file_to(sock, path, content);
+        if (valid_path(path)) {
+            if (get_cookie_from_http(request, cookie) == VALID
+                && verify_cookie(path, cookie) == VALID) {
+                    get_content_from_http(request, content);
+                    set_content_length(request);
+                    check_expect_100(request);
+                    write_file_to(sock, path, content);
+            }
+            else if (get_user_pass_from_http(path, user, pass) == VALID
+                    && verify_user(user, pass) == VALID) {
+                    set_cookie(user, pass, cookie);
+                    send_http_cookie(sock, cookie);
+            }
+            else
+                send_http_response(sock, FORBIDDEN);
         }
         else {
-            get_content_from_http(request, content);
-            if (get_user_pass_from_http(path, user, pass) == VALID
-                && verify_user(user, pass) == VALID) {
-                set_cookie(user, pass, cookie);
-                send_http_cookie(sock, cookie);
-            }
-            else {
-                send_http_response(sock, FORBIDDEN);
-            }
+            send_http_response(sock, BADREQ);
         }
     }
     else
