@@ -3,6 +3,16 @@
  * You may not use, distribute, or modify this code without
  * the express written permission of the copyright holder.
  */
+/* README
+1. POST to login
+curl -v -X POST "http://localhost:4200/login?username=Bob&password=n9wur32@"
+
+2. POST to upload files
+curl -v -X POST -H "Cookie: cookie=2G]v:pKT5_gk" -d "@http.c" "http://localhost:4200/Bob/file"
+
+3. GET request to get files
+curl -v -H "Cookie: cookie=2G]v:pKT5_gk" "http://localhost:4200/Bob/file"
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -275,7 +285,7 @@ void encrypt_username(const char *line, char cookie[]) {
     int N = strlen(line);
     char cipher_text[N];
     char key[N];
-    char msg[N];
+    // char msg[N];
     // printf("\nmessage: ");
     srand(time(NULL));
     // initial key
@@ -295,9 +305,9 @@ void encrypt_username(const char *line, char cookie[]) {
     // printf("key saved as %s\n", keys[num_keys - 1]);
 
     // printf("\ncipher text: %s", cipher_text);
-    for (int i = 0; i < N; i++) {
-        msg[i] = cipher_text[i] ^ key[i];
-    }
+    // for (int i = 0; i < N; i++) {
+    //     msg[i] = cipher_text[i] ^ key[i];
+    // }
     // printf("\nmessage: %s\n", msg);
     strncpy(cookie, cipher_text, LINE_LEN);
 }
