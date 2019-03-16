@@ -266,7 +266,6 @@ int authenticate_user(const char *user, const char *cookie) {
 }
 
 void encrypt_username(const char *line, char cookie[]) {
-
     char orig_line[LINE_LEN];
     strncpy(orig_line, line, LINE_LEN);
     int N = strlen(line);
@@ -423,16 +422,11 @@ void httpRequest(int sock, char *request) {
 
         get_path_from_http(request, path);
         if (valid_path(path)) {
-            if (get_cookie_from_http(request, cookie) == VALID) {
-                if (verify_cookie(path, cookie) == VALID) {
-                    printf("its verified?");
-                }
-                printf("path = %s\n", path);
-                printf("cookie = %s\n", cookie);
-                    get_content_from_http(request, content);
-                    set_content_length(request);
-                    check_expect_100(request);
-                    write_file_to(sock, path, content);
+            if (verify(request, path, cookie)) {
+                get_content_from_http(request, content);
+                set_content_length(request);
+                check_expect_100(request);
+                write_file_to(sock, path, content);
             }
             else if (get_user_pass_from_http(path, user, pass) == VALID
                     && verify_user(user, pass) == VALID) {
