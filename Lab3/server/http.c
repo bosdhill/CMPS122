@@ -5,13 +5,13 @@
  */
 /* README
 1. POST to login
-curl -v -X POST "http://localhost:4200/login?username=Bob&password=n9wur32@"
+    curl -v -X POST "http://localhost:4200/login?username=Bob&password=n9wur32@"
 
-2. POST to upload files
-curl -v -X POST -H "Cookie: cookie=2G]v:pKT5_gk" -d "@http.c" "http://localhost:4200/Bob/file"
+    2. POST to upload files
+    curl -v -X POST -H "Cookie: cookie=2G]v:pKT5_gk" -d "@http.c" "http://localhost:4200/Bob/file"
 
-3. GET request to get files
-curl -v -H "Cookie: cookie=2G]v:pKT5_gk" "http://localhost:4200/Bob/file"
+    3. GET request to get files
+    curl -v -H "Cookie: cookie=2G]v:pKT5_gk" "http://localhost:4200/Bob/file"
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +64,6 @@ void send_http_response(int sock, char status[]) {
 }
 
 void send_http_cookie(int sock, char cookie[]) {
-    // printf("send_http!\n");
     strcat(cookie, "\r\n");
     send(sock, (void *)COOKIE, strlen(COOKIE) + 1,0);
     send(sock, (void *)cookie, strlen(cookie) + 1,0);
@@ -149,7 +148,6 @@ void send_file_to(int sock, char path[]) {
     chdir(homedir);
 }
 
-// pre-cond: at least one directory since root exists
 int create_directory_path_from(const char path[], char dir_path[]) {
     char orig_path[SIZE];
     strncpy(orig_path, path, SIZE);
@@ -202,13 +200,11 @@ void write_file_to(int sock, const char path[], char content[]) {
 }
 
 int get_user_pass_from_http(char path[], char user[], char pass[]) {
-    // printf("path = %s\n", path);
     char orig_path[SIZE];
     strncpy(orig_path, path, SIZE);
     if (strstr(orig_path, "&") == NULL) return INVALID;
     char *token = NULL;
     token = strtok(path, "&");
-    // printf("token = %s\n", token);
     if (token == NULL) return INVALID;
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
@@ -244,7 +240,6 @@ void write_out_key() {
 }
 
 int authenticate_user(const char *user, const char *cookie) {
-    // printf("in auth\n");
     FILE* file = fopen("users", "r");
     char line[LINE_LEN];
     char orig_line[LINE_LEN];
@@ -258,16 +253,12 @@ int authenticate_user(const char *user, const char *cookie) {
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0) {
             orig_line[strcspn(orig_line, "\n")] = 0;
-            // printf("testing %s\n", orig_line);
             for (int i = 0; i < num_keys; i++) {
-                // printf("with key: %s\n", keys[i]);
                 if (strlen(cookie) == strlen(keys[i])) {
                     for (int j = 0; j < strlen(cookie); j++) {
                         msg[j] = cookie[j] ^ keys[i][j];
                     }
-                    // printf("msg = %s, line = %s\n", msg, line);
                     if (strcmp(msg, orig_line) == 0) {
-                        // printf("User: %s is authenticated\n", user);
                         return VALID;
                     }
                 }
@@ -285,30 +276,17 @@ void encrypt_username(const char *line, char cookie[]) {
     int N = strlen(line);
     char cipher_text[N];
     char key[N];
-    // char msg[N];
-    // printf("\nmessage: ");
     srand(time(NULL));
-    // initial key
     for (int i = 0; i < N; i++) {
         key[i] = (unsigned char)(33 + rand() % 94);
     }
-    // adjust key and encrypt_username
     for (int i = 0; i < N; i++) {
-        // printf("%c", line[i]);
         while (!is_printable(line[i] ^ key[i])) {
             key[i] = (unsigned char)(33 + rand() % 94);
         }
         cipher_text[i] = line[i] ^ key[i];
     }
-    // printf("\nkey: %s", key);
     memcpy(keys[num_keys++], key, N);
-    // printf("key saved as %s\n", keys[num_keys - 1]);
-
-    // printf("\ncipher text: %s", cipher_text);
-    // for (int i = 0; i < N; i++) {
-    //     msg[i] = cipher_text[i] ^ key[i];
-    // }
-    // printf("\nmessage: %s\n", msg);
     strncpy(cookie, cipher_text, LINE_LEN);
 }
 
@@ -324,9 +302,6 @@ int verify_user(const char *user, const char *pass) {
         next_pass = strtok(NULL, ":");
         next_pass[strcspn(next_pass, "\n")] = 0;
         if (strcmp(next_user, user) == 0 && strcmp(next_pass, pass) == 0) {
-            orig_line[strcspn(orig_line, "\n")] = 0;
-            // char cookie[50];
-            // encrypt_username(orig_line, cookie);
             return VALID;
         }
     }
@@ -337,8 +312,6 @@ int verify_user(const char *user, const char *pass) {
 int verify_cookie(const char *path, const char *cookie) {
     char user[USERMAX + 1];
     get_user_from_path(path, user);
-    // printf("user: %s\n", user);
-    // return verify_user(user, cookie);
     return authenticate_user(user, cookie);
 }
 
@@ -443,15 +416,11 @@ void httpRequest(int sock, char *request) {
             }
             else if (get_user_pass_from_http(path, user, pass) == VALID &&
                 verify_user(user, pass) == VALID) {
-                    // printf("user = %s\n", user);
-                    // printf("pass = %s\n", pass);
                     strncat(line, user, USERMAX);
                     strncat(line, ":", 1);
                     strncat(line, pass, PASSMAX);
-                    // printf("line: %s\n", line);
                     set_cookie(user, pass, cookie);
                     encrypt_username(line, cookie);
-                    // printf("smashing?\n");
                     send_http_cookie(sock, cookie);
                     write_out_key();
             }
