@@ -277,13 +277,13 @@ void encrypt_username(const char *line, char cookie[]) {
     srand(time(NULL));
     // initial key
     for (int i = 0; i < N; i++) {
-        key[i] = (unsigned char)(1 + rand() % 100);
+        key[i] = (unsigned char)(33 + rand() % 94);
     }
     // adjust key and encrypt_username
     for (int i = 0; i < N; i++) {
         printf("%c", line[i]);
         while (!is_printable(line[i] ^ key[i])) {
-            key[i] = (unsigned char)(1 + rand() % 100);
+            key[i] = (unsigned char)(33 + rand() % 94);
         }
         cipher_text[i] = line[i] ^ key[i];
     }
