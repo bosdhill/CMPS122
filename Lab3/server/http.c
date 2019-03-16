@@ -72,8 +72,8 @@ static void binary(int sock, char *fname) {
 }
 
 int is_printable(int character) {
-    if ((character >= 40 && character <= 126 && character != 96)
-        || (character >= 129 && character <= 169 ))
+    if ((character >= 48 && character <= 122 && character != 96
+        && character != 92 && character != 61))
         return VALID;
     return INVALID;
 }
@@ -191,10 +191,14 @@ void write_file_to(int sock, const char path[], char content[]) {
     chdir(homedir);
 }
 
-int get_user_pass_from_http(const char *content, char user[], char pass[]) {
-    char orig_content[SIZE];
-    strncpy(orig_content, content, SIZE);
-    char *token = strtok(orig_content, "&");
+int get_user_pass_from_http(char path[], char user[], char pass[]) {
+    printf("path = %s\n", path);
+    char orig_path[SIZE];
+    strncpy(orig_path, path, SIZE);
+    if (strstr(orig_path, "&") == NULL) return INVALID;
+    char *token = NULL;
+    token = strtok(path, "&");
+    printf("token = %s\n", token);
     if (token == NULL) return INVALID;
     strncpy(user, strstr(token, "login?username=") + strlen("login?username="), USERMAX);
     token = strtok(NULL, "&");
@@ -389,7 +393,7 @@ void set_cookie(const char *user, const char *pass, char cookie[]) {
     strncpy(cookie, pass, PASSMAX);
 }
 
-void check_expect_100(char *request) {
+void check_expect_100(const char *request) {
     if (abs(content_length - (int)strlen(request)) > (BYTES/2)) EXPECT = 1;
 }
 
@@ -414,11 +418,10 @@ void httpRequest(int sock, char *request) {
     else if (get_req_type(request) == POST) {
         char user[USERMAX + 1];
         char pass[PASSMAX + 1];
-        char cookie[LINE_LEN + strlen("\r\n") + 1];
+        char cookie[LINE_LEN + strlen("\r\n")];
         char path[SIZE];
         char content[BYTES];
         char line[LINE_LEN];
-        memset(line, '\0', LINE_LEN);
 
         get_path_from_http(request, path);
         if (valid_path(path)) {
@@ -428,8 +431,8 @@ void httpRequest(int sock, char *request) {
                 check_expect_100(request);
                 write_file_to(sock, path, content);
             }
-            else if (get_user_pass_from_http(path, user, pass) == VALID
-                    && verify_user(user, pass) == VALID) {
+            else if (get_user_pass_from_http(path, user, pass) == VALID &&
+                verify_user(user, pass) == VALID) {
                     printf("user = %s\n", user);
                     printf("pass = %s\n", pass);
                     strncat(line, user, USERMAX);
