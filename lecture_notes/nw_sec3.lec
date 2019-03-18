@@ -1,0 +1,213 @@
+### Lecture notes
+DNS, TLS, DNSSEC
+
+DNS operations & Vulnerabilities
+
+When finding the IPv4 address of a url,
+You send the request from your IPv4 address to a gateway,
+which then sends the packet to a network of routers/switchs,
+and then eventually ends up at a DNS "resolver"
+
+Host Names Vs IP Addresses
+Host Names
+- www.blah.com
+- for humans
+IP addresses
+- numerical address understood by routers
+- fixed length, binary #
+- hierachical, related to host location
+
+Mapping Names to Addresses
+Domain Name System (DNS)
+-  Hierachical name space divided into sub-trees ("zones")
+    e.g.  .edu, .ucsc.edu, .soe.ucsc.edu
+    (top level domain, sub-domain)
+- Zones distributed over collection of DNS name servers
+
+Hierarchy of DNS servers
+- Root (hardwired into other servers) (root = .)
+- Top-level Domain (TLD) servers (.com)
+- Authoritative servers (e.g. for facebook.com) you assign server to handle
+lookups for certain domain
+
+                            . (root)
+            ________________|_______________________
+            |       |           |           |       |
+            .com    .dev        .net        .world  (...)
+      ______|___  ____|_____  ____|____  _____|_____
+     |   |     |  |    |    |  |   |  |  |    |     |
+    bobby.com      bobby.dev    ....            ...
+
+
+
+End systems (alice's laptop) configured with IP address of a local DNS resolver
+to contact for their lookups
+
+When looking up via a Resolver, it first goes to Root which tells it where
+to go for TLD, and then from TLD you get where to go to Authoritiative, etc.
+To trick people, you have to convince TLD dns server that you are the post
+for that host/ip addr
+- reason for hierarchy is to ensure you are going to correct authoratiative server
+- roughly decentralized hierarchical
+- in DNS protocol, you're trusting the result you get is coming from the right
+DNS server
+
+DNS threats
+DNS is on critical path for just about everything we do
+- Maps hostnames <-> IP addresses (both directions)
+- Design only scales if we can minimize lookup traffic
+    - no. 1 traffic reduction mechanism: caching (routing table?, must propogate change throught internet)
+    - no. 2 "": return not only answers to queries, but additional info that will
+    almost certainly be needed shortly (to save round trips)
+- What if attacker eavesdrops on our DNS queries?
+    - Simple to then redirect us with spoofed misinfo
+    - will see whatever traffic you were trying to send to target hostname
+- Consider attackers who can't eavesdrop  BUT  instead mess with how the protocol
+functions
+- Directly interacting with DNS: dig utility on Unix/Unix-like
+    - allows querying of DNS system
+    - Dumps fields found in DNS responses
+
+Dig (host name) A -> look up address record for hostname
+Look up name over DNS
+DNS is NOT connection based, it goes over UDP (propogates)
+RR = Resource record
+
+    ; <<>> DiG 9.10.6 <<>> eecs.mit.edu A // Dig id'ing its version and query attempting to look up
+    ;; global options: +cmd
+    ;; Got answer:
+    ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 47347 // transaction id to enable DNS client to match upr eply with original request, since DNS requests are over UDP and not connection based
+    // so client sends DNS request packets over UDP to resolver, then waits for DNS packet responses with this id
+    ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+    ;; OPT PSEUDOSECTION:
+    ; EDNS: version: 0, flags:; udp: 4096
+    ;; QUESTION SECTION:
+    ;eecs.mit.edu.			IN	A // dns server echos back question asked ot it
+
+    ;; ANSWER SECTION:
+    eecs.mit.edu.		1800	IN	A	18.62.1.6 // tells you IP associated with host name, and Time to Live (1800 sec long cache in DNS)
+
+    ;; AUTHORITY SECTION
+    // what name servers are responsible for this answer
+    // name server record
+    // diff servers that can answer lookups in mit.edu domain
+    // if answer is empty, client/resolver would post org query to one of these servers
+
+    ;; Query time: 6 msec
+    ;; SERVER: 192.168.1.254#53(192.168.1.254)
+    ;; WHEN: Mon Mar 11 18:31:00 PDT 2019
+    ;; MSG SIZE  rcvd: 57
+
+    // Could you overflow cache with digs to bum (non existent, or dummy) servers?
+    // how many would you need?
+
+DNS Packets
+if no response, truy again since UDP
+- Identificaiton = 16 bit id of query
+- Each RR has TTL for caching
+
+DNS protocol
+- Lightweight exchange of query and reply messages, both same format
+- Primarily uses UDP
+- port 53 for client and servers
+overhead of TCP not worth it since connnecting to so many hosts
+
+
+What happens when domain server is untrustworthy (mit.edu)? Could its operator
+steal or eavesdrop on all our fb.com traffic?
+
+    Cache poisoning! Poison resolvers cache with different mapping, and let it be authoritative server
+    have mit.edu point to facbeook.com ip address (let it be one of the DNS in Authority)
+    resolver will then go through mit.edu next time you want to go to fb.com
+    next time user requests facebook within TTL, will go through mit.edu server
+    now operator of mit.edu dns can observe traffic to facebook.com
+
+NOTE:
+    Additional records adds entries into your resolver's cache!
+    You control he mappings between host name and ip addresses!
+FIX: (Bailliwick checking)
+    Dont accept additional records UNLESS they're from the domain of the name server
+    we queried (facebook.com  != mid.edu in this case, must be *.mit.edu)
+    (dont accept them in your cache)
+
+DNS Threats: Blind Spoofing
+- Spoofing answers
+- How can off path attacker feed us a bogus Answer before legitimate server replies?
+- How can remote server know which host name we're looking up?
+
+HOW ATTACKER CAN SPOOF REPLY
+If you are using a slightly malicious website, it hosts contebnt like images.
+So if you select a URL from a malicious website, it may decide where its looked up
+
+    1. Attacker has malicious website hosted on his server
+    2. User loads server, so attacker gets first identification number for domain name lookup
+        << since ID increments by 1 for each request)
+    3. Attacker can then guess next ID # (ID + 1) and service that UDP request from client,
+    and then successfully reroute traffic, if it beats the requested response
+    (just spread several different ID #'s)
+    (Attacker just listens for IDentifcation # on attacker's DNS servers)
+    Defense: Randomize DNS ID
+
+
+Kaminsky Blind Spoofing
+- Two key ideas:
+    - Spoof uses Additional field (rather than Answer)
+    - Attacker can get around caching of legitmate replies by generating a series of
+    different name lookups
+
+Have client lookup a bunch of hostnames it doesnt have cached already, and
+try to beat out one of them. This would generate an Additional field which
+is used to cache NEW lookups with attacker's name server.
+So, all answer sections will be the same, but the additional section will
+contain the attacker's name server.
+
+MAIN PROBLEM: Identification Field
+- lacks sufficient entropy since 16 bit
+- only authentication there is
+- How can we get more entropy?
+
+Use other fields to increase amount of entropy:
+- Source and destination ports
+- have destination port stay the same at 53
+- have source port be random!! (now we have 32 bits of entropy 16 + 16)
+    - but not all resolvers have implemented random source ports
+
+DNS Security Issues: Summary
+Attackers can strike opportunistically rather than eavesdropping
+Attackers can manipulate victims into vulnerable activity
+Crucial for identifiers to have sufficient entropy
+
+### TLS
+Channel vs Object Security
+- Channel Security: securing a means of communication
+- Object Security:  securing data values (message contents)
+- CIA (Confidentaility, integrity, and authentication) applies to both
+- Secure DNS (DNSSEC) provides object security for DNS results
+
+Channel - route/path of message
+Object - message itself
+
+May be related but are independent
+
+Building Secure E2E Channels: SSL/TLS
+- Secure Sockets Layer (SSL) predecessor
+- Transport Layer Security (TLS) standard
+- Note: Terms are used interchangeably
+- Motivation: provide a mneans to secure any TCP based application
+    - secure = encryption/confidentiality + ... CIA
+- API similar to socket interface for insecure network programming
+    - relativley easy to convert an application to secure
+
+API the same but now channel is SECURE
+Will be directly below Application Layer and rest of stack
+
+HTTPS Connections via SSL/TLS
+- Syn
+- Syn + Ack
+- Client picks random # Rb and sends over list of crypt protocols it supports
+- Server picks random # Rs and seleccts cypher protocol
+- Client validates server certificate authority
+Rb and Rs is shared Key (public rsa key, wtv.)
+
+

@@ -1,0 +1,219 @@
+### Lecture notes
+Final:
+    Might have to turn in on campus and turn in off campus
+    O.w. have it on campus
+
+Crypto Goals
+CIA
+C = prevent from reading
+I = " altering
+A = who created it? (A -> I)
+
+Symmetric
+- Key shared between Alice and Bob
+E = D^-1
+D = E^-1
+
+Attacker wants to gain any knowledge (>50%)
+Defender wants attacker to have no basis to determine M
+
+Eve's power
+Cipher only:
+Only sees cipher text
+Partial knowledge about M
+
+Known plaintext:
+Knowns something about M (english message, y/n, HTTP GET request)
+
+Active attacks
+Chosen Plaintext:
+Can send M for Alice to encrypt
+
+Chosen cipehrtext:
+Eve tricks  Bob into decrypting some C of her choice and revealing something
+about result
+(reval if its valid cipher text or invalid, might find length of M through this)
+
+Indistinguishability Games
+
+Adversary -> provides input1, input2
+            Referee chooses one and encryptes
+ Input1 or 2? <-
+
+chosen plaintext:
+may ask for ciphertext of any plaintext
+
+chosen ciphertext attack:
+she can get any plaintext from ciphertext and vice versa
+
+and can ask for any C and M vice versa besides plaintext of the input1/input2 ciphertext (but can ask for ciphertext of either)
+any deterministic encryption algorithm would fail CCA because:
+    Adv gives M1, M2
+    Ref gives C
+    Adv E(M1) and E(M2) and checks if either of them are C
+    Then 100% success rate (>50%)
+
+All we rely on is that the key is secret! but algorithm is not
+
+Kerchkoff's Principle
+- dont rely on obscurity!
+- key is secret
+
+One-Time Pad
+req1:
+Use a different key for each message
+defeats CPA and CCA because you have a 50/50 chance of guessing each bit!
+M XOR (RANDOM) = RANDOM!
+req2:
+key must be as long as M
+
+Limitiations of 1-time pad:
+- Key generation
+    How can we gaurantee randomness?
+    At scale is difficult (new Key)
+- Key Length
+    Must anticipate message length in advance
+- Key Distribution
+    Exchanging the key (channel must be secure)
+
+Not scalable!
+
+
+Block Cypher
+Three properties:
+1. correctness:
+    E(M) is shuffling the bit strings (a permutation)
+    Is invertable
+2. Efficiency:
+    cheap to compute
+3. Security:
+    for unknown K, gives random permutation
+
+Issues with Block Ciphers
+- can only encrypt messages of a certain size
+- if M is larger, repeadetly apply block cipher
+    - block cipher mode
+
+
+ECB Mode Encryption
+- use block cipher a bunch of times
+- problem: resusing the key
+- deterministic! (will match c1 to p1) no randomness, same message will be encrypted the same way
+
+Better ECB Mode:
+- start with IV
+- Have output of previous encryption to be input to next encryption
+Copher Block Chaining
+- Choose IV
+- Ci-1 will be IV of next Pi encryption
+- Split Pi encrytion until last Pi then pad it
+- block size must be length of key
+BUT if IV was random, then it would still be deterministic
+
+Cipher Block Chaining: Decryption
+Provide IV, and go in reverse (XOR) with cipher text
+
+Hard to parallize because each stage depends on previous stage
+(Alternative is Counter Mode)
+
+Counter Mode
+Add counter to nonce which is effectively random
+nonce + [or (XOR)] counter encrypted with each cipher text, making each block Pi will yield a different Ci
+
+Building A Crytopgraphically Strong PRNG (HOW TO GET RANDOM NONCE/IV/KEY!)
+- Simple PRNG design generates 128-bit numbers
+    -state : seed (some randomness) and N (samples so far)
+    - PRNG(SEED) = {return AES-128_seed(++N)}
+    - counter maintains randomnesss
+
+Encryption does not provide integrity (who is dec/enc? who is sending me messages? we need signatures!!)
+
+
+Verifiying Integrity and Authentication
+IDEA: comebine cryptographically secure hash functions with symmetric key cryptography
+- MACS (Message Authetication Code) estapblish integrity of key
+- For each message, can only create one K
+
+Cryptographically Strong Hash Function
+- Take big message and make hash value
+Strong if
+One-way (pre-image resistant):
+    - h=Hash(x) is easy to compute, but not invert
+    - i.e. given h, is instractbale to find any x' s.t. Hash(x') = h
+    (Given a hash, hard to find the message that resulted in it)
+Second preimage resistant:
+    Given an x, hard to find x' s.t. Hash(x) = Hash(x')
+    (Given a message, hard to find a different message with same hash)
+Collision resistant:
+    Hard to find x!=y s.t. Hash(x) = Hash(y)
+    (Given two messages, hard to collide them)
+
+Brute Force
+Preimage attack: 2^n
+Second preinage: attack: 2^n
+Collision 2^(n/2) -> looking for pairs
+
+MACS
+Use a sahred secrey key K
+T = F(K, M), for some hash F
+When Bob receives M, T, bob checks whether T' = F(K, M')
+
+Each message is tied to a tag where the tag depends on a shared key,
+so if someone intercepted the M, T, she would need to produce a new tag T
+to go with her new message (which she can't)
+
+MAC Security Definitions
+Universal Unforgeability (UUF):
+    - For any M, attacker can create valid tag T (must need K) (ALL M)
+Selective Unforgeability (SUF):
+    - For given M, attacker create T. (You know the message that has a T, select # of messages, message types) (SOME M)
+Existential Unforgeability (EUF):
+    - Attacker can create at least one message/tag pair {M, T} that was not created by a legit signer (AT LEAST ONE M)
+
+EUF - > SUF - > UUF
+
+Authenticated Encryption: Integrity and Confidentiality
+- > How to combine CPA schemes and EUF MACS:
+
+1. Encrypt and Authenticate:
+    - Send C, T where C = E(M, Ke) and T = MAC(M, Km)
+    - receiver decrypts C, verfies T or discards
+Problem:
+    1. MAC tag T may leak info about M (dont do hash over RAW message)
+    2. MAC is determisitic, may be same for same M
+2. Authenticate then encrypt:
+    - Send C = (M + T, KE) and T = MAC(M, Km)
+    - Receiver decrypts C and verifies T or discards
+Problem:
+    1.May fail, decryption may fail due to padding error
+    2. if decryption doesnt fail, message may be rejected if tag is invalid
+    3. timing the events!
+    4. if attacker can distiniguish between failure cases, it can recover M via CCA (thorugh timing of success and failure)
+3. Encrypt-then=authenticate
+    - Send C, T where C = E(M, Ke) and T = MAC(C,  Km)
+    - Recevier verifies T then decrypts C
+Problem:
+    1.EIF -> attacker cannot create valid pair C, T
+    2. CCPA2 secure (where you can ask plaintext for any C,P) b.c attacker cant ask plaintext for anything it doesnt have the tag for
+
+RSA public key encryption
+Potential Problems
+- Attacker can generate whatever they want (cuz they have public key)
+- Need to randomize key with IV each time we encrypt a message
+
+
+Certificate Authorities
+-trusted parties in public key infrastucture
+-basically says that a public key is Bob's
+problems:
+all based on premise that CA correctly identifies Bob
+1. solution
+- have key be invalidated, so cert would become invalidated
+- adds management burden
+- fail-safe defaults
+2. solution
+- public revocation list of certificates (CRL)
+- you just look at a list you download, but might be a bit large
+3. CA provides service to query Online Certifciate Status Protocol directly
+- CA learns a lot about who you are talking about
+- will know each query

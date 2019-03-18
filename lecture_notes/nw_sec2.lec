@@ -1,0 +1,138 @@
+NO AUDIO
+### Slides Notes
+Last time
+    Protocols: agreement on how to comm
+    Dumb network: inter. nodes have little
+    knowledge of ongoing connection
+    Layering: Layer N depends on services provided by N - 1
+
+Network Attacks
+    Confidentiality: No one can read our data unless we want them to
+    Integrity: No one can manipulate our data/processing/comm unless we want them to
+    Availability: we can access our data/conduct our processing/use our comm
+    capabilities when we want to
+
+    Also: No additional traffic other than ours
+
+Link-Layer Threads
+    Confidentiality: eavesdropping (sniffing packets)
+    Integrity: injection of spoofed packets
+    Injection: delete legit packets (e.g., jamming)
+
+Eavesdropping:
+- For subnets, broadcasting using Wifi and Ethernet it is easy
+- Wireshark lets you dump each attached system's NIC (Network interface card)
+- Let's you see packets being sent between IP's
+
+Stealing Photons
+
+Link-Layer Threat: Disruption
+
+- If attacker sees pakcet he doesn't like, he can jam it (violates integrity)
+- Attacker canalso overwehlm link-layer signaling, jam WiFi's RF (denial of service)
+- can physically cut wires (physical/data layers)
+
+Physical/Link-Layer Threat: Spoofing
+- Attacker can inject spoofed packets, and lie about source address
+- W/ physical access to LAN, attacker can create any message they like (spoofing when lying about source addr)
+- Powerful when combined with eavesdropping, since they can understand exact
+state of users comm and match it
+- Spoofing - eavesdroping = blind spoofing
+
+Spoofing on Internet
+- On path attackers can easily see vitcims traffic
+- Off path cant
+    - must guess header values to succeed
+    - 16-bit values, try all 65k possibilities
+- Can spoof = reasonable chance of success
+
+Layer 3 General Threats:
+Set arbitrary source addr:
+    - Spoofing - recv has no idea who you are
+    - Could be blind or coupled with spoofing
+
+Can set arbitrary destination address
+    - Enables "scanning" - brute force searching for hosts
+
+Can send like crazy (flooding)
+    - IP has no general mechnaism for tracking overuse or consent
+    - Very hard to tell where a spoofed flood comes from
+
+If attacker can manipulate routing, can bring traffic to themselves for
+eavesdropping (not easy)
+
+LAN bootstrapping: DHCP
+New host doesn't have an IP address yet
+- So, host doesn't know what source address to use
+Host doesnt know how to ask for an IP address
+- So, host doesnt know what destination address to use
+
+Solution: Shout to discover server that can help
+- Broadcast a server-discovery message (layer 2)
+- Server(s) sends a reply offering an address
+
+Dynamic Host Configuration Protocol
+- When client broadcasts to DHCP server, attacker on same subnet can hear
+new hosts DHCP request
+-Attacker can race against DHCP server, and replace DNS server if they win
+
+DHCP Threats
+- Substitute a fake DNS server and redirect lookups
+- Sub a fake gateway router to intercept all of hosts off-subnet traffic
+    (even if not preceded by a DNS lookup)
+    - Relay contents back and forth between host and remote server and modify
+        however attacker chooses
+    - Invisible MITM (Man in the middle)
+        - Victim host has no way of knowing it's happening
+            can't necesarrily alarm on percuilairity of receiving multiple DHCP
+            replies, since that can't happen benignly
+
+TCP
+    seq - where does this packet fit w/n sender's bytestream
+
+TCP Thread: Data Injection
+- If attacker knows ports & sequence numbers (e.g., on-path attacker),
+attacker can inject data into any TCP connection
+    - Receiver is none the wiser!
+- Termed TCP connection hijacking (or "session hijacking")
+    - In general means to take over an already-established connection!
+- We are toast if an attacker can see our TCP traffic!
+    - B/c they can immediately know the port & sequence numbers
+
+Can vs Cant seeing traffic
+
+TCP Threat: Disruption
+- Is it possible for an on-path attacker to shutdown a TCP connection if they
+can see our traffic?
+- YES: they can infer the port and sequence numbers - they can insert fake data,
+too! (Great Firewall of China)
+
+TCP Threat: Blind Hijacking
+• Is it possible for an off-path attacker to inject into
+a TCP connection even if they can’t see our
+traffic?
+• YES: if somehow they can infer or guess the port
+and sequence numbers
+
+TCP Threat: Blind Spoofing
+• Is it possible for an off-path attacker to create a
+fake TCP connection, even if they can’t see
+responses?
+• YES: if somehow they can infer or guess the
+TCP initial sequence numbers
+• Why would an attacker want to do this?
+– Perhaps to leverage a server’s trust of a given client as
+identified by its IP address
+– Perhaps to frame a given client so the attacker’s
+actions during the connections can’t be traced back to
+the attackers
+
+So for disruption and bling hijacking, the connection needs to already be
+established, and the attacker may not need to be on path, just need to infer
+the port and sequence numbers. Also, the attacker doesnt need to see the traffic.
+
+But for Blind Spoofing, the attacker is creating the connection, and to do so
+they need the TCP initial sequence #'s. Why>
+    leverage trust of client IP addr
+    Frame a client's actions so cant be traced toattacker
+ISN = Initial Sequence Number

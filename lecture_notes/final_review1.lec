@@ -1,0 +1,207 @@
+### Lecture Notes
+Course Review
+
+High Level Overview of Topics We Discussed
+
+Main Takeaways! (What we need to know for Final)
+
+Final:
+    Short ans -> like the hw questions but more narrow
+    Ex: List CIA of this security mechanism
+    Format:
+        - Short ans qusetions - fill in the blank, T/F, multiple choice for concepts
+        - Longer form questions that go in more detail and more involved
+    Impending Strike on Wednesday?
+        - Degrees of freedom to move things?
+        - Partial Strike
+        - Reschedule the exam?
+
+Threat Models and Principles
+- Security is Economics
+    - applies to everything (all principles)
+- Human Factors Matter
+    - goes hand in hand with Psychological Acceptability
+- Even w/ fancy secure hardware, if you use it improperly it will not work
+
+Principle: Least Privelege
+- Dont give process more privelge than it needs
+- Limit damage/cost that occurs in case of failure
+
+Trusted Computing Base
+-  Portion of system that must work properly to guaraentees proper functionality
+- Assurances of correctness, completeness and security?
+    - Smaller and simpler it is, the easier it is to understand, test and audit/verify
+    - less security holes
+- Build things that dont require trust to reduce size of critical code
+
+Complete Mediation
+- Single access point to system/resources that is guaranteed to be monitored (Reference Mintors)
+- properties:
+    - un-bypassable
+    - tamper-proof
+    - verifiable (correct)
+- Same as TCB (access to TCB)
+
+Time of Last Update - ???
+
+Separation of Duty
+- Both need to turn keys
+- Split up privilege so no one user proram has complete power
+- Require more than one party to approve before access is granted
+    - Need to be independent parties
+        - Separation of interests
+
+Defense in Depth
+- useful to have multiple mechanisms
+- Each layer of defense is independent of one another
+    - Suppose you had a VM in a VM in a VM with same password... doesnt accomplish more security
+-
+
+Reasonable Assumptions
+- For Attackers we can assume
+    - They can interact with our systems
+    - They may learn a lot of information from system
+    - cause crashes under the radar
+    - suppose they know everything about your system
+    - They can have exact copy of your systems (base stack address)
+- Will make use of automation
+- Intiate sophisticated coordinated activity
+- May have large resources
+    - Computational, network capacity
+    - Botnets like EC2 for attackers
+
+- Assume they can obtain elevated privileges
+    - but if being root gives everything away, its trivial so can just assume
+    un=priveleged attacks
+
+Security Policies
+- Waht its supposed to do and not supposed to do
+
+Attack
+- violate Security Policy exploiting vulnerability
+
+Expressing Policies
+- Often describes behavior of system principals
+
+Trust vs Trustworthy
+trust - ASSUMPTION that it will work the way we think it will
+trusted - not he same as trustworthy
+trustworthy - DOES behave the way as intended
+
+What should Pincipals do?
+CIA
+Confidentiality - no secrets are let out (which principals may learn what information)
+Integrity - only the person intended can use it (authentication)
+Availability - can use it when we want to (when must inputs be readable or outputs produced)
+
+Enforcement Mechanisms
+- An attack causes intructions to be executed that results in violation of policy
+ - either prevents or recovers
+    - Isolation
+    - Monitoring
+    - Recovery
+EX: Docker, Browser, anything that runs on top of OS (isolated from other processes)
+
+Challenges of Isolation
+- Restrict communication as much as possible
+- functionality- need to support more kinds of communication
+- becomes redundant (keep wrapping and wrapping in isolation)
+
+Monitoring
+- Interfaces of a ssytem and halt before violations occur
+    - security policy: acceptble sequences of operations
+    - reference monitor: cjhecks operationsa s they are requested
+    - Kill switch: some way of stopping system before damage occurs
+
+Recovery
+- Cant enforce confidentiality, once its leaked its un recoverable
+- Most effective at reversing corruption (integrity)
+
+
+#### Section 2
+Software Security
+
+Software Safety
+Modularity:
+    - pre cond - what f expects to be true
+    - post cond - if pre-cond is true, what holds post f's execution
+
+Invariants: conditions that hold always at some point in the program
+
+make it unsigned (ensure positive)
+
+
+Smashing the Stack
+What's buffer overflow?
+    - putting shit into designated memory, and overwriting other shit to
+    overwrite return pointer
+    - you say what ets to execute next
+
+Stack Canaries are checked ot make sure the stack wasn't fucked with
+
+Avoiding stack canaries
+- write up until the canary but not over it
+- then use offset of one buffer to create another buffer, and then overwrites
+the return pointer
+- where does he detemrine X and Y though?
+
+Data execution prevention
+- Separate executable code from data
+- never execute data!
+
+Binary Code Reuse
+- find code that is useful, and then hop to it and call those functions
+
+#### Section 3
+Web Security
+
+Server Side Threats
+- Input Sanitization
+-
+
+SQL Injection
+- defenses: sanitize input
+- better: constrain how user input is interpreted
+    - user input should be interpreed as VALUE not SQL CODE
+- USE PREPARED STATEMENTS! positional arguments to query
+- only allow leafs to be added to parse tree, not sub trees
+
+SQL injection takewaway
+- webservers are target
+
+
+CSRF Cross Site Request Forgery
+- Makes site goes to another site (misuse auth data)
+- Use cookies for mybank.com to access alice's account
+Defense
+    - Referer validation: Browser is gonna say what url sent alice to mybank.com
+    (trusting Alice's browser)
+
+    Default Deny - strict disallows
+    Default Allow - laenient policy allows
+Referer might contain sensitive info, so might be removed by network, the local machine
+
+CSRF Defense:
+Token validation
+- Server requestes secret token for every action
+- User's browser obtains this token if user visited the site and brosed to taht action
+    EX: Form request (Pages have tokens to redirect to mybank.com)
+- Token must be hard to guess by attaker
+
+XSS "Cross Site Scripting"
+- Same Origin Policy
+    - One origin should not be able toa ccess the resouces of another origin
+    - images and scripts are not subject to same origin policies
+
+- Subvert same origin policy!
+    - trick server of interentst to send attacker's script to your browser
+    - browser can't distingiuish malicious scripts from real scripts
+    - attacker scripts has full access to shit in origin
+
+Stored/persistent
+    - stored in server of interest
+Reflected
+    - attacker gets you to send mybank.com w/ script from their page
+    - not access to server
+    - just needs to embed JS in url that alice clicked from attacker's page
+

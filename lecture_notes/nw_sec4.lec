@@ -1,0 +1,210 @@
+### Lecture notes
+DNS, TLS and DNSSEC continued
+
+Most DNS
+- Not enough entropy in identification #
+
+HTTPS Connections via SSL/TLS (RSA Handshake)
+- Syn
+- Syn + Ack
+- Client picks random # Rb and sends over list of crypt protocols it supports
+- Server picks random # Rs and seleccts cypher protocol
+- Client validates server certificate authority
+Rb and Rs is shared Key (public rsa key, wtv.)
+So we have Rb, Rs and Ks which is Server's RSA public key
+- After server sends cert, client (browser) generates a 328bit "Premaster Secret" PS
+- Browser sends PS encrypted with Ks
+- Using PS (which they both now have access to), browser and server
+derive symmetric cipher keys (Cb, Cs) & MAC integrity keys (Ib, Is)s
+    - So MAC function is one where if you pass in the secret Key with the MEssage you
+    get the tag to ensure its integrity (so good if F(Cb, Rb) = Ib, F(Cs, Rs) = Is for
+    message {Cb, Ib}, {Cs, Is})
+
+- Browser and server exchange MACs computed over entire dialog so far (all
+there exchanged messages)
+- if a good MAC, then SECURE
+- All subsequence communication encrypted with symmetric cipher
+    {M2, MAC(M2, Is)}_Cs
+- Counter on each message
+
+HTTPS Alternative Key Exchange
+- For Diffie-Hellman, server generates random a, sends public parameters
+g and p, g^a mod p all signed with server's public key
+- browser verifies signature
+- browser generates random b, computes g^b mod p
+- browser sends g^b mod p to server
+- browser and server independently compute a shared secret PS = g^(ab) mod p
+- Remainder is same as before
+    - Using PS (which they both now have access to), browser and server
+derive symmetric cipher keys (Cb, Cs) & MAC integrity keys (Ib, Is)s
+- susceptibale to MITM since they can serve as intemediary with DHE
+
+Certificates
+Cert = signed statement about someone's public key
+    - doesnt say anything about identity of who gives you the cert
+    - simply states public key Kbob belongs to Bob
+        - backs up this statement
+
+Bob can thenprove id by you sending him something encryptedwith Kbob since he can decrypt it
+- Works provided yout rust that you have valid copy of Verisign's
+public key
+
+Validating Amazon's Identity
+- Browser compares domain name in cert w/ URL
+    - E2E property
+        - name we're going to will be secure w/r to CIA and we auth other side of this connection
+- Browser needs access to these other certs
+    - These are hardwired into the browser
+    - as long as you can start from known trusted cert
+
+- Browser applies issuer's pub key to verify sig, obtaining hash
+of wtv the issuer signed
+    -if its right, creates hash with cert from amazon
+
+E2E protection?
+Removing possibility of MITM attack
+Cache poisoning?
+    -  Mightve looked up wrong amazon
+    - but attacker cant sign for amazon since it wont have amazon's private key
+DHCP sppofing (client goes to wrong server)
+
+TCP layer
+    - can still have TCP injection attack
+    - but, we have MACS (know who the TCP packet is from)
+    - can still force a RST
+
+What if browser cant find cert for Amazon?
+ - signed by CA you haven't seen before
+ - all trust depends on CA!! so if CA isnt someone we trust, its fucked!
+
+ Why not use it for everything??
+ - crypto is computationally intensive/expensive
+ - hassle of buying and maintaining certificates
+ - DoS amplification
+    - Client can force server to undertake expensive public key operations
+    - Requires established TCP connection
+- Take longer to load
+
+Denial of Services
+Just channel security
+- Forcing TCP RST
+- Syn flooding
+- RST injection
+- SQL injection/XSS/Server-side bugs
+
+SSL Strip Attack
+If you connect with HTTP before HTTPS, if an attacker was in middle of
+that connection, they could pose as amazon and serve the http connection itself
+
+
+HTTP Strict Transport Security (HSTS)
+To defend against SSL strip attacks, a web server canr eturn (during HTTPS) header
+directives such as:
+Strict-Transport-Security: max-age=31536000 includeSubDomains
+
+- Directs browser to:
+    - only connect to that site using HTTPS (expires in a year)
+    - Promote any HTTP links in pages to HTTPS
+    - Dont allow connections with cert errors to proceed
+- Similar to TOFU, requires a safe initial connection
+    - O.w. MITM attacker could strip out the heade
+- Many browsers today use apredefined list of HSTS sites
+
+TLS/SSL Trust Issues
+(trusing CA roots)
+decentralized
+
+DNSSEC
+Securing DNS Lookups
+- How can we ensure when clients look up names they get teh right IP Addresses?
+- Idea 1: Do DNS lookups over Transport Layer Security (secure channel)
+    - Assumes we run DNS over TCP or we use  "datagram TLS" (but uses UDP)
+    - Issues?
+        - performance: DNS/UDP is lightweight, TLS is not
+        - caching: crucial for DNS scaling, but howdow ekeep auth assurances?
+            - Object Security vs. Channel Security
+- Idea 2: Make DNS results like Certs (object security)
+    - i.e. a verifiable signature that guarantees who generated a piece of data
+        - signing happens off-line (how>?)
+
+DNSSEC - standardized DNS security extensions
+- currently being deployed, not universally adopted
+- As a resolver works its way from DNS root down to final name
+  server for a name, at each level it ets asigned statement regarding the
+  keys used by the next level
+    - This builds up a chain of trusted keys
+    - Resolver has root's key hardwired into it
+- The final answer the resolver receives is signed by that level's key
+    - Resolver can trust it's the right key via chain of support from higher levels
+- All keys and signed reuslts are cacheable
+
+DNSSEC
+
+
+DS -> .com's public key
+RSSIG DS -> root's signature using root's private key (verify with root's public key)
+
+- DS -> .com's public key
+- new RR tells us if we have a correct copy of .com's public key
+- Resolver has root's public key hardwired into it - the client will only proceed
+with DNSSEC if it can validate the signature
+- New RR specifices signature over another RR, in this case the signature covers
+the above DS record and is made using root's private key
+
+Then goes to next server, and gets hash of google.com's pub key and a signature
+from server verifying its google.com's key (stronger security since this server
+would have to be authorized up the chain)
+
+The last  signature is when you get tothe A record, which would be aregular cert (
+encrypyed with google.com's private key)
+
+Mallory attack
+- would need to know private key of domain she's impersonating
+- would ignore it b/c its not properly signed by TLD
+- but if she is, if she sends A record with signature, it would be for evil.com and not google.com
+- relies on hierarchy of trust!
+- she can only sign with google.com's private key (only way around it)
+- relies on private key being secure
+
+DNSSEC: Accessing Key (caching public keys to verify private key signatures of DNS servers)
+To build up keys needed for validation, clientcontacts eachname server in DNS hierarchy asking it for all of its associated keys.
+
+Here we ask the root for its keys, the trust anchor
+we can ask for anh other keys wwe need ushc as .com and google.com's in poarallel and cache them
+
+DNSKEY record
+DNSKEY cryptogoop (cipher suites)
+KSK (Key Signing Key) -> what a higher level will use to sign a lower level's key (google will get .com's)
+ZSK (Zone Signing Key) -> what an entity will use to sign its records (.com signs its record for google with ZSK)
+so parent wont have to reauthorize ZSK each time its changed
+
+ZSK is going to sign the DS records (DS hash-of-google.com's-key)
+Parent sign's KSK, signed by parent's ZSK
+
+Issues
+Makes records really big!
+partial deployements (unvalidated/unsigned results)
+not used everywhere
+
+If you cant get DNSSEC record, either you dont trust it but there may not be a choice (lack of object security)
+
+Management headaches -> a lot of keys to manage, key signing ceremonies
+Negative Results
+    -> what if there isn't a lookup? expensive key-signing for bogus requests, DoS attack
+    -> sign offline statements about order of names
+        "gabby.google.com is followed by gabrunk.google.com"
+            - thus, client an see inbetweend doesnt/cant exist
+            - lexographical indexing for faster negative lookups
+    -> but now attackers know what exists
+        -> you hash domain name and look in range of hashes
+
+Who do you really trust?
+    - who gonna fetch and verify all the keys?
+    - your computer needs to! not local resolver
+
+TLS -> Channel Security for communication over TCP
+    -> CIA
+    ->dependent on CA
+DNSSEC-> Object Security for DNS results
+    -> IA, not C~ (not needed, mappings are public just need to ensure they're correct)
+    ->dependent on root DNS server and chain

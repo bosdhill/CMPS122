@@ -1,0 +1,50 @@
+# Lecture 15 notes
+# TS: 00:28:22
+## Network Control... on the Cheap
++ Motivation: protect set of sys against ext attack
+    1. the most network services (processes) machines run, the greater the risk
+    due to increased attack surface
+
++ One Approach: Disable unnecessary network services
+    1. But you have to know all services that are running (ps aux | grep _)
+    2. Sometimes a few trsuted remote users still require access
+
++ Tricky to scale
+    1. What happens with thousands of systems?
+    2. may not all be identified (hard to track assets)
+    3. doing machine by machine (manually... ugh)
+
+## Taming Management Complexity
+1. Possibily more scalable defense: Reduce risk by blocking outsiders from having
+unwanted access to your internal network services
++ Interpose a firewall that traffic to/from outside must traverse
++ must distingiush between in/outbound connections
++ inbound: external users who're trying to connect to services hosted on internal machines
++ outbound: attempts by internal users to connect to unauthorized external services
+2. A single chokepoint that can cover 1,000s of hosts
+3. Conceptually simple:
++ permit internal users to connect to any internal service
++ external users are restricted to only what is externally exposed, and are otherwise denied
+
+## What about Traffic not covered by Policy?
+1. Default Allow:
++ Start off permitting external access to services (internal users)
++ shut them off as problems recognized
++ goes against fail-safe security model
+2. Default Deny:
++ Start off permitting just a few known, well secured services
++ add more when users complain (and mgt. approves) (we want access to this service!)
+3. Pros & cons?
++ Flexibility vs conservative design
++ flaws in default deny get noticed more quickly/less painfully
+
+## Packet Filtering
+1. Most basic kind of firewall is a packet filter
++ Just a router with list of access control rules
++ Router checks each received packet against security rules to decide to forward or drop it
++ Each rule specifies which packets it applies to based on a packet's header fields (Stateless)
+    + Specify source and dest IP addresses, port numbers and portocol names, or wild cards
+    + Each rule specifies the action for matching packets: ALLOW or DROP (aka DENBY)
+        <action> <protocol> <SRC:PORT> -> <DST:PORT>
++ first listed rule has precedence
+
