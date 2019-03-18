@@ -1,5 +1,8 @@
 # Lecture 15 notes
 # TS: 00:28:22
+# webcast:
+# username: cmps-122-1
+# password: setecastronomy
 ## Network Control... on the Cheap
 + Motivation: protect set of sys against ext attack
     1. the most network services (processes) machines run, the greater the risk
